@@ -1,0 +1,7 @@
+node_modules/
+.env
+secureshare/data/*.db
+secureshare/data/*.db-shm
+secureshare/data/*.db-wal
+secureshare/backend/uploads/*
+!secureshare/backend/uploads/.gitkeep

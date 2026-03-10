@@ -1,0 +1,71 @@
+const express = require('express');
+const bcrypt  = require('bcryptjs');
+const jwt     = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+const db      = require('../db');
+
+const router = express.Router();
+
+// POST /api/auth/register
+router.post('/register', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json({ error: 'EMAIL_AND_PASSWORD_REQUIRED' });
+
+  if (password.length < 6)
+    return res.status(400).json({ error: 'PASSWORD_MIN_6_CHARS' });
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email))
+    return res.status(400).json({ error: 'INVALID_EMAIL_FORMAT' });
+
+  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
+  if (existing)
+    return res.status(409).json({ error: 'EMAIL_ALREADY_REGISTERED' });
+
+  const hash = await bcrypt.hash(password, 12);
+  const id   = uuidv4();
+
+  db.prepare('INSERT INTO users (id, email, password) VALUES (?, ?, ?)')
+    .run(id, email.toLowerCase(), hash);
+
+  const token = jwt.sign({ id, email: email.toLowerCase() }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
+
+  res.status(201).json({ token, user: { id, email: email.toLowerCase() } });
+});
+
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json({ error: 'EMAIL_AND_PASSWORD_REQUIRED' });
+
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+  if (!user)
+    return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match)
+    return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+
+  res.json({ token, user: { id: user.id, email: user.email } });
+});
+
+// GET /api/auth/me
+router.get('/me', require('../middleware/auth'), (req, res) => {
+  const user = db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(req.user.id);
+  if (!user) return res.status(404).json({ error: 'USER_NOT_FOUND' });
+  res.json({ user });
+});
+
+module.exports = router;

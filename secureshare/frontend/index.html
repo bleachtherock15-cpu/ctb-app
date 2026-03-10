@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CTB — Cyber Tool Box</title>
+<link rel="stylesheet" href="css/main.css"/>
+</head>
+<body>
+<div id="notif">
+  <svg class="n-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="notif-icon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span id="notif-msg"></span>
+</div>
+
+<!-- ══ AUTH ══ -->
+<div id="auth">
+  <div class="aw">
+    <div class="auth-logo">
+      <div class="auth-logo-box">
+        <img src="img/kku-logo.png" alt="KKU" style="width:40px;height:40px;object-fit:contain"/>
+      </div>
+      <div class="auth-logo-name">CTB</div>
+    </div>
+
+    <div class="auth-card">
+      <h2 id="auth-title">ยินดีต้อนรับกลับ</h2>
+      <p id="auth-desc">เข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+      <div class="mode-tog">
+        <button class="mb-btn on" id="mb-si" onclick="setMode('si')">เข้าสู่ระบบ</button>
+        <button class="mb-btn" id="mb-su" onclick="setMode('su')">สมัครสมาชิก</button>
+      </div>
+      <div class="mb12">
+        <label class="lbl">อีเมล</label>
+        <input class="inp" type="email" id="a-email" placeholder="you@example.com"/>
+      </div>
+      <div class="mb16">
+        <label class="lbl">รหัสผ่าน</label>
+        <input class="inp" type="password" id="a-pass" placeholder="อย่างน้อย 6 ตัวอักษร" onkeydown="if(event.key==='Enter')doAuth()"/>
+      </div>
+      <div id="a-msg"></div>
+      <button class="btn btn-primary btn-full btn-lg mt8" onclick="doAuth()" id="a-btn">เข้าสู่ระบบ</button>
+      <p style="font-size:11px;color:var(--tx-3);text-align:center;margin-top:14px">Backend: <span style="color:var(--blue);font-family:'JetBrains Mono',monospace">localhost:3001</span> · JWT · SQLite</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div class="app" id="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-logo">
+      <div class="logo-box">
+        <img src="img/kku-logo.png" alt="KKU" style="width:28px;height:28px;object-fit:contain"/>
+      </div>
+      <div>
+        <div class="logo-t">CTB</div>
+        <div class="logo-s">Cyber Tool Box</div>
+      </div>
+    </div>
+
+    <div class="sb-nav">
+      <div class="ng-label">โอนไฟล์</div>
+      <div class="ni a-c" id="ni-dash" onclick="goPage('dash')">
+        <div class="ni-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div>
+          <div class="ni-label">แชร์ไฟล์</div>
+          <div class="ni-sub">อัปโหลด & โอน</div>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+      <div class="ng-label">วิเคราะห์</div>
+
+      <div class="ni" id="ni-kit" onclick="goPage('kit')">
+        <div class="ni-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="ni-kit-ico"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div>
+          <div class="ni-label" id="ni-kit-lbl">Cyber Toolkit</div>
+          <div class="ni-sub">แฮช · URL · รหัสผ่าน</div>
+        </div>
+      </div>
+
+      <div class="ni" id="ni-geo" onclick="goPage('geo')">
+        <div class="ni-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="ni-geo-ico"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+        </div>
+        <div>
+          <div class="ni-label" id="ni-geo-lbl">GeoSight AI</div>
+          <div class="ni-sub">ตรวจจับตำแหน่ง</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-avatar" id="sb-av">U</div>
+        <div style="min-width:0">
+          <div class="sb-email" id="sb-email">user@example.com</div>
+          <div class="sb-role">ยืนยันตัวตนแล้ว</div>
+        </div>
+      </div>
+      <div class="sb-status">
+        <div class="online-dot"></div>
+        <span>API Connected · AES-256</span>
+      </div>
+      <button class="btn-so" onclick="signOut()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </nav>
+
+  <div class="main">
+
+    <!-- ═══ PAGE: FILE SHARE ═══ -->
+    <div class="page on" id="p-dash">
+      <div class="ch">
+        <div class="ch-eyebrow">Module 01</div>
+        <div class="ch-title">แชร์ไฟล์</div>
+        <div class="ch-sub">โอนไฟล์แบบเข้ารหัส — อัปโหลด แชร์ลิงก์ กำหนดวันหมดอายุและจำนวนดาวน์โหลด</div>
+      </div>
+
+      <!-- Upload card -->
+      <div class="card mb16">
+        <div class="card-header">
+          <div class="card-icon" style="background:rgba(79,141,255,.12)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <div class="card-title">อัปโหลดไฟล์</div>
+            <div class="card-sub">ไม่เกิน 50 MB ต่อไฟล์</div>
+          </div>
+        </div>
+        <div class="cb">
+          <div class="dz" id="up-dz" onclick="document.getElementById('up-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="upDrop(event)">
+            <input type="file" id="up-fi" onchange="upSelect(event)"/>
+            <div class="dz-icon-wrap">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div class="dz-title" id="up-dz-t">วางไฟล์ที่นี่เพื่ออัปโหลด</div>
+            <div class="dz-sub" id="up-dz-s">หรือคลิกเพื่อเลือกไฟล์ · ไม่เกิน 50 MB</div>
+          </div>
+
+          <div class="g2 mt16">
+            <div>
+              <label class="lbl">วันหมดอายุ</label>
+              <select class="inp" id="up-ttl">
+                <option value="">ไม่มีวันหมดอายุ</option>
+                <option value="1">1 ชั่วโมง</option>
+                <option value="6">6 ชั่วโมง</option>
+                <option value="24" selected>24 ชั่วโมง</option>
+                <option value="72">3 วัน</option>
+                <option value="168">7 วัน</option>
+              </select>
+            </div>
+            <div>
+              <label class="lbl">จำกัดจำนวนดาวน์โหลด</label>
+              <input class="inp" type="number" id="up-mdl" placeholder="ไม่จำกัด" min="1"/>
+            </div>
+          </div>
+
+          <div id="up-prog" style="display:none" class="mt12">
+            <div class="ptrack"><div class="pfill pf-blue" id="up-bar" style="width:0%"></div></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);margin-top:6px" id="up-pct">Uploading... 0%</div>
+          </div>
+          <div id="up-err"></div>
+          <button class="btn btn-primary btn-full btn-lg mt16" onclick="doUpload()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            เข้ารหัสและอัปโหลด
+          </button>
+        </div>
+      </div>
+
+      <!-- Share list -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background:rgba(53,208,127,.1)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div><div class="card-title">การโอนที่ใช้งานอยู่ <span style="color:var(--tx-3);font-weight:400" id="sh-cnt">(0)</span></div></div>
+        </div>
+        <div class="cb" style="padding:12px">
+          <div id="sh-list">
+            <div style="text-align:center;padding:28px;color:var(--tx-3);font-size:13px">ยังไม่มีการโอนไฟล์</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PAGE: TOOLKIT ═══ -->
+    <div class="page" id="p-kit">
+      <div class="ch">
+        <div class="ch-eyebrow">Module 02</div>
+        <div class="ch-title">Cyber Toolkit</div>
+        <div class="ch-sub">สร้างแฮช · สแกน URL · วิเคราะห์รหัสผ่าน</div>
+      </div>
+
+      <!-- Tool selector cards -->
+      <div class="kit-selector">
+        <button class="kit-tab kt-active" id="tt-hash" onclick="showTool('hash')">
+          <div class="kit-tab-icon" style="background:rgba(79,141,255,.15);border-color:rgba(79,141,255,.25)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>
+          </div>
+          <div class="kit-tab-info">
+            <div class="kit-tab-name">แฮช</div>
+            <div class="kit-tab-desc">MD5 · SHA-1 · SHA-256</div>
+          </div>
+          <div class="kit-tab-dot" style="background:var(--blue)"></div>
+        </button>
+        <button class="kit-tab" id="tt-url" onclick="showTool('url')">
+          <div class="kit-tab-icon" style="background:rgba(53,208,127,.1);border-color:rgba(53,208,127,.2)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </div>
+          <div class="kit-tab-info">
+            <div class="kit-tab-name">สแกน URL</div>
+            <div class="kit-tab-desc">ฟิชชิ่ง · ตรวจจับภัยคุกคาม</div>
+          </div>
+          <div class="kit-tab-dot" style="background:var(--green)"></div>
+        </button>
+        <button class="kit-tab" id="tt-pass" onclick="showTool('pass')">
+          <div class="kit-tab-icon" style="background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.2)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </div>
+          <div class="kit-tab-info">
+            <div class="kit-tab-name">รหัสผ่าน</div>
+            <div class="kit-tab-desc">ความแข็งแกร่ง · เวลาแคร็ก</div>
+          </div>
+          <div class="kit-tab-dot" style="background:var(--amber)"></div>
+        </button>
+      </div>
+
+      <!-- HASH -->
+      <div class="tp on" id="tp-hash">
+        <div class="card kit-panel">
+          <div class="kit-panel-header" style="--accent:var(--blue);--accent-bg:rgba(79,141,255,.06)">
+            <div class="kit-panel-title">
+              <span class="kit-badge" style="background:rgba(79,141,255,.12);color:var(--blue);border-color:rgba(79,141,255,.25)">HASH</span>
+              สร้างแฮช
+            </div>
+            <div class="kit-mode-switch">
+              <button class="kms-btn kms-on" id="hm-file" onclick="setHM('file')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                ไฟล์
+              </button>
+              <button class="kms-btn" id="hm-text" onclick="setHM('text')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                ข้อความ
+              </button>
+            </div>
+          </div>
+          <div class="cb">
+            <div id="h-fz">
+              <div class="dz kit-dz" onclick="document.getElementById('h-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hfDrop(event)">
+                <input type="file" id="h-fi" onchange="hfSel(event)"/>
+                <div class="dz-icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="dz-title" id="h-fn">วางไฟล์หรือคลิกเพื่อเลือก</div>
+                <div class="dz-sub">รองรับทุกประเภทไฟล์ · คำนวณ MD5, SHA-1, SHA-256 ในเครื่อง</div>
+              </div>
+            </div>
+            <div id="h-tz" style="display:none">
+              <textarea class="inp" rows="5" id="h-ti" placeholder="วางข้อความที่ต้องการแฮชที่นี่..." style="font-family:'JetBrains Mono',monospace;font-size:12px;resize:none"></textarea>
+            </div>
+            <button class="btn btn-primary btn-full mt12" onclick="runHash()" style="background:linear-gradient(135deg,var(--blue),var(--blue-2));border:none;font-size:13px;padding:13px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+              สร้างแฮช
+            </button>
+          </div>
+        </div>
+        <div class="rp" id="h-res"></div>
+      </div>
+
+      <!-- URL -->
+      <div class="tp" id="tp-url">
+        <div class="card kit-panel">
+          <div class="kit-panel-header" style="--accent:var(--green);--accent-bg:rgba(53,208,127,.06)">
+            <div class="kit-panel-title">
+              <span class="kit-badge" style="background:rgba(53,208,127,.1);color:var(--green);border-color:rgba(53,208,127,.25)">SCAN</span>
+              สแกนความเสี่ยง URL
+            </div>
+          </div>
+          <div class="cb">
+            <label class="lbl">URL เป้าหมาย</label>
+            <div class="kit-url-wrap">
+              <span class="kit-url-prefix">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              </span>
+              <input class="inp" type="text" id="url-inp" placeholder="https://example.com" onkeydown="if(event.key==='Enter')runUrl()" style="border-radius:0;border-left:none;border-right:none;flex:1"/>
+              <button class="btn btn-success" onclick="runUrl()" style="border-radius:0 var(--rs) var(--rs) 0;padding:10px 20px;border:1px solid var(--green)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                สแกน
+              </button>
+            </div>
+            <div class="kit-hints">
+              <span class="kit-hint">ฟิชชิ่ง</span>
+              <span class="kit-hint">TLD น่าสงสัย</span>
+              <span class="kit-hint">เปิดเผย IP</span>
+              <span class="kit-hint">Redirects</span>
+            </div>
+          </div>
+        </div>
+        <div class="rp" id="url-res"></div>
+      </div>
+
+      <!-- PASSWORD -->
+      <div class="tp" id="tp-pass">
+        <div class="card kit-panel">
+          <div class="kit-panel-header" style="--accent:var(--amber);--accent-bg:rgba(245,166,35,.06)">
+            <div class="kit-panel-title">
+              <span class="kit-badge" style="background:rgba(245,166,35,.1);color:var(--amber);border-color:rgba(245,166,35,.25)">LOCK</span>
+              วิเคราะห์รหัสผ่าน
+            </div>
+          </div>
+          <div class="cb">
+            <label class="lbl">รหัสผ่าน</label>
+            <div class="kit-pw-wrap">
+              <span class="kit-url-prefix">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              </span>
+              <input class="inp" type="password" id="pw-inp" placeholder="พิมพ์รหัสผ่านเพื่อวิเคราะห์..." oninput="runPw(this.value)" style="border-radius:0;border-left:none;border-right:none;flex:1;font-family:'JetBrains Mono',monospace;letter-spacing:.1em"/>
+              <button onclick="togglePw()" class="kit-pw-eye" id="pw-show">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div id="pw-bar-wrap" style="display:none;margin-top:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+                <span id="pw-str-lbl" style="font-size:12px;font-weight:800"></span>
+                <span id="pw-ent-lbl" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx-3)"></span>
+              </div>
+              <div class="kit-pw-segments" id="kit-pw-segs">
+                <div class="kit-pw-seg"></div><div class="kit-pw-seg"></div>
+                <div class="kit-pw-seg"></div><div class="kit-pw-seg"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rp" id="pw-res"></div>
+      </div>
+
+    </div>
+
+    <!-- ═══ PAGE: GEOSIGHT ═══ -->
+    <div class="page" id="p-geo">
+      <div class="ch">
+        <div class="ch-eyebrow">Module 03 · AI Powered</div>
+        <div class="ch-title">GeoSight AI</div>
+        <div class="ch-sub">อัปโหลดรูปภาพหรือวิดีโอ — AI วิเคราะห์เบาะแสในภาพเพื่อคาดเดาสถานที่และพิกัด GPS</div>
+      </div>
+
+      <!-- Warning -->
+      <div style="display:flex;gap:10px;background:rgba(155,121,245,.07);border:1px solid rgba(155,121,245,.18);border-radius:var(--rs);padding:12px 16px;margin-bottom:20px;align-items:flex-start">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p style="font-size:12px;color:rgba(155,121,245,.9);line-height:1.6">ผลลัพธ์ที่ได้ไม่ใช่การฟันธง — เป็นการคาดเดาจากสภาพแวดล้อมในรูป เช่น ป้าย ภาษา สถาปัตยกรรม ภูมิประเทศ และยานพาหนะ</p>
+      </div>
+
+      <!-- Drop zone -->
+      <div id="geo-drop-wrap">
+        <div class="card mb16">
+          <div class="cb">
+            <div class="dz" id="geo-dz" onclick="document.getElementById('geo-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="geoDrop(event)">
+              <input type="file" id="geo-fi" accept="image/*,video/*" onchange="geoFileSelect(event)"/>
+              <div class="dz-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+              </div>
+              <div class="dz-title" id="geo-dz-title">วางรูปภาพหรือวิดีโอที่นี่</div>
+              <div class="dz-sub" id="geo-dz-sub">คลิกเพื่อเลือกไฟล์ · JPG · PNG · WEBP · MP4 · MOV</div>
+            </div>
+
+            <!-- Preview -->
+            <div id="geo-preview-wrap" style="display:none;margin-top:14px;position:relative">
+              <img id="geo-preview" style="width:100%;max-height:320px;object-fit:contain;border-radius:var(--rs);background:var(--bg-2);border:1px solid var(--border)" alt="preview"/>
+              <button onclick="clearGeoFile()" style="position:absolute;top:10px;right:10px;width:28px;height:28px;background:rgba(13,14,20,.85);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:all .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx-2)" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div id="geo-err"></div>
+            <button class="btn btn-outline btn-full btn-lg mt16" onclick="doGeoAnalyze()" id="geo-btn" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              ตรวจจับรูปภาพด้วย AI
+            </button>
+          </div>
+        </div>
+
+        <!-- Feature cards -->
+        <div class="g4">
+          <div class="card" style="padding:16px">
+            <div style="font-size:20px;margin-bottom:8px">🪧</div>
+            <div style="font-size:12px;font-weight:700;color:var(--tx-1);margin-bottom:3px">ป้ายและข้อความ</div>
+            <div style="font-size:11px;color:var(--tx-3)">ป้ายถนน ป้ายร้านค้า ตัวอักษร</div>
+          </div>
+          <div class="card" style="padding:16px">
+            <div style="font-size:20px;margin-bottom:8px">🏛️</div>
+            <div style="font-size:12px;font-weight:700;color:var(--tx-1);margin-bottom:3px">สถาปัตยกรรม</div>
+            <div style="font-size:11px;color:var(--tx-3)">รูปแบบอาคาร ยุคสมัย วัสดุ</div>
+          </div>
+          <div class="card" style="padding:16px">
+            <div style="font-size:20px;margin-bottom:8px">🏔️</div>
+            <div style="font-size:12px;font-weight:700;color:var(--tx-1);margin-bottom:3px">ภูมิประเทศ</div>
+            <div style="font-size:11px;color:var(--tx-3)">ภูเขา พืชพรรณ ภูมิทัศน์</div>
+          </div>
+          <div class="card" style="padding:16px">
+            <div style="font-size:20px;margin-bottom:8px">🚗</div>
+            <div style="font-size:12px;font-weight:700;color:var(--tx-1);margin-bottom:3px">ยานพาหนะ</div>
+            <div style="font-size:11px;color:var(--tx-3)">ป้ายทะเบียน รุ่นรถ</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="geo-loading" id="geo-loading">
+        <div class="geo-spinner"></div>
+        <div style="font-size:15px;font-weight:700;color:var(--tx-1);margin-bottom:5px" id="geo-load-title">กำลังวิเคราะห์รูปภาพ...</div>
+        <div style="font-size:12px;color:var(--tx-3);margin-bottom:20px">AI กำลังตรวจสอบเบาะแสในภาพ</div>
+        <div class="geo-steps" id="geo-steps"></div>
+      </div>
+
+      <!-- Results -->
+      <div class="geo-result" id="geo-result">
+        <!-- Confidence + location -->
+        <div class="geo-conf-card">
+          <div class="geo-ring">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="var(--bg-4)" stroke-width="5"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--teal)" stroke-width="5" stroke-linecap="round" stroke-dasharray="201.1" id="geo-conf-arc" stroke-dashoffset="201.1" style="transition:stroke-dashoffset 1s ease"/></svg>
+            <div class="geo-ring-pct" id="geo-conf-pct">0%</div>
+          </div>
+          <div style="flex:1">
+            <div class="geo-loc" id="geo-loc">—</div>
+            <div class="geo-region" id="geo-region"></div>
+          </div>
+        </div>
+
+        <!-- Coordinates -->
+        <div class="geo-coords">
+          <div class="geo-coord-box" onclick="copyGeoCoord('lat')">
+            <div class="geo-coord-key">ละติจูด</div>
+            <div class="geo-coord-val" id="geo-lat">—</div>
+            <div class="geo-coord-hint">copy</div>
+          </div>
+          <div class="geo-coord-box" onclick="copyGeoCoord('lng')">
+            <div class="geo-coord-key">ลองจิจูด</div>
+            <div class="geo-coord-val" id="geo-lng">—</div>
+            <div class="geo-coord-hint">copy</div>
+          </div>
+        </div>
+
+        <!-- Map link -->
+        <a class="geo-map-btn" id="geo-map-link" href="#" target="_blank" rel="noopener">
+          <div class="geo-pin-bounce">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3" fill="rgba(56,196,184,.15)"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(56,196,184,.08)"/></svg>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:var(--tx-1)">เปิดใน Google Maps</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3)" id="geo-map-label"></div>
+        </a>
+
+        <!-- Findings -->
+        <div class="card mb12">
+          <div class="card-header">
+            <div class="card-icon" style="background:rgba(56,196,184,.1)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div><div class="card-title">เบาะแสที่พบในภาพ</div></div>
+          </div>
+          <div class="cb" style="padding:8px 20px"><div id="geo-findings"></div></div>
+        </div>
+
+        <!-- Reasoning -->
+        <div class="card mb12">
+          <div class="card-header">
+            <div class="card-icon" style="background:rgba(155,121,245,.1)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </div>
+            <div><div class="card-title">เหตุผลของ AI</div></div>
+          </div>
+          <div class="cb"><p style="font-size:13px;color:var(--tx-2);line-height:1.7" id="geo-reasoning"></p></div>
+        </div>
+
+        <!-- Alternatives -->
+        <div class="card mb16">
+          <div class="card-header">
+            <div class="card-icon" style="background:rgba(79,141,255,.1)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </div>
+            <div><div class="card-title">ตำแหน่งที่เป็นไปได้อื่นๆ</div></div>
+          </div>
+          <div class="cb" style="padding:12px 20px"><div id="geo-alternatives"></div></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <button class="btn btn-ghost" onclick="resetGeo()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4"/></svg>
+            วิเคราะห์รูปอื่น
+          </button>
+          <span style="font-size:11px;color:var(--tx-3)">พิกัด GPS เป็นการประมาณการ</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script src="js/api.js"></script>
+<script src="js/hash.js"></script>
+<script src="js/app.js"></script>
+<script src="js/geo.js"></script>
+</body>
+</html>

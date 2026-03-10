@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CTB — Download File</title>
+<link rel="stylesheet" href="css/main.css"/>
+<style>
+.dl-wrap{max-width:440px;margin:0 auto;padding:60px 20px}
+.dl-file-icon{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid var(--border)}
+.dl-filename{font-size:18px;font-weight:800;color:var(--tx-1);word-break:break-all;text-align:center;margin-bottom:6px}
+.dl-meta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+
+/* Toast notification */
+.dl-toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--bg-3);border:1px solid var(--border);border-radius:12px;
+  padding:14px 20px;display:flex;align-items:center;gap:12px;
+  font-size:13px;color:var(--tx-1);box-shadow:0 8px 32px rgba(0,0,0,.4);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;opacity:0;
+  min-width:260px;max-width:360px;z-index:999;
+}
+.dl-toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.dl-toast.error{border-color:rgba(245,91,91,.4);background:rgba(245,91,91,.08)}
+.dl-toast.success{border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.dl-toast-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dl-toast.error .dl-toast-icon{background:rgba(245,91,91,.15)}
+.dl-toast.success .dl-toast-icon{background:rgba(52,211,153,.15)}
+
+/* Download progress overlay on button */
+#dl-btn{position:relative;overflow:hidden;cursor:pointer}
+#dl-btn.loading{pointer-events:none;opacity:.7}
+.dl-btn-spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+#dl-btn.loading .dl-btn-icon{display:none}
+#dl-btn.loading .dl-btn-spinner{display:block}
+</style>
+</head>
+<body>
+<div class="dl-wrap">
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:36px">
+    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <span style="font-size:16px;font-weight:800;color:var(--tx-1)">CTB</span>
+  </div>
+
+  <!-- Loading -->
+  <div id="state-loading" style="text-align:center;padding:40px">
+    <div style="width:32px;height:32px;border:2px solid var(--bg-4);border-top-color:var(--blue);border-radius:50%;margin:0 auto 12px;animation:spin .7s linear infinite"></div>
+    <div style="font-size:13px;color:var(--tx-3)">Loading share...</div>
+  </div>
+
+  <!-- Ready -->
+  <div id="state-ready" style="display:none">
+    <div class="card" style="padding:28px;text-align:center">
+      <div class="dl-file-icon" style="background:rgba(79,141,255,.1);border-color:rgba(79,141,255,.2)">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="dl-filename" id="dl-name"></div>
+      <div class="dl-meta" id="dl-meta"></div>
+      <button id="dl-btn" class="btn btn-primary btn-full btn-lg">
+        <svg class="dl-btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <div class="dl-btn-spinner"></div>
+        Download File
+      </button>
+      <p style="font-size:11px;color:var(--tx-3);margin-top:14px;line-height:1.6">Shared via CTB · Verify files before opening</p>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="state-error" style="display:none">
+    <div class="card" style="padding:32px;text-align:center;border-color:rgba(245,91,91,.2)">
+      <div style="font-size:36px;margin-bottom:12px">⛔</div>
+      <div style="font-size:16px;font-weight:800;color:var(--red);margin-bottom:8px" id="err-title">Access Denied</div>
+      <div style="font-size:13px;color:var(--tx-3);margin-bottom:20px" id="err-msg"></div>
+      <a id="back-btn" class="btn btn-ghost" style="text-decoration:none;cursor:pointer">← Back to platform</a>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="dl-toast" id="dl-toast">
+  <div class="dl-toast-icon" id="dl-toast-icon"></div>
+  <div>
+    <div id="dl-toast-title" style="font-weight:700;margin-bottom:2px"></div>
+    <div id="dl-toast-msg" style="color:var(--tx-3);font-size:12px"></div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+(async () => {
+  const token = new URLSearchParams(window.location.search).get('token');
+  if (!token) { showError('No Token', 'No share token found in the URL.'); return; }
+
+  let shareData, szFmt, ttl;
+
+  function renderMeta(count) {
+    document.getElementById('dl-meta').innerHTML =
+      `<span class="badge bdg-blue">${szFmt}</span>` +
+      `<span class="badge bdg-green">${count} download${count !== 1 ? 's' : ''}</span>` +
+      `<span class="badge bdg-amber">${ttl}</span>`;
+  }
+
+  function showToast(type, title, msg) {
+    const toast = document.getElementById('dl-toast');
+    const icon  = document.getElementById('dl-toast-icon');
+    toast.className = `dl-toast ${type}`;
+    document.getElementById('dl-toast-title').textContent = title;
+    document.getElementById('dl-toast-msg').textContent   = msg;
+    if (type === 'error') {
+      icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+    } else {
+      icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    }
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  try {
+    const { share } = await Shares.getInfo(token);
+    if (share.expired)      { showError('Share Expired',   'This share link has expired.'); return; }
+    if (share.limit_reached){ showError('Limit Reached',   'The download limit for this file has been reached.'); return; }
+
+    shareData = share;
+    const size = share.file_size;
+    szFmt = size < 1048576 ? (size / 1024).toFixed(1) + ' KB' : (size / 1048576).toFixed(1) + ' MB';
+    ttl   = !share.expires_at ? 'Never expires' : (() => {
+      const d = new Date(share.expires_at) - Date.now();
+      if (d <= 0) return 'Expired';
+      const h = Math.floor(d / 3600000);
+      const days = Math.floor(h / 24);
+      return days > 0 ? `Expires in ${days}d` : `Expires in ${h}h`;
+    })();
+
+    document.getElementById('dl-name').textContent = share.original_name;
+    renderMeta(share.download_count);
+
+    const btn = document.getElementById('dl-btn');
+    btn.addEventListener('click', async () => {
+      btn.classList.add('loading');
+      try {
+        const dlUrl = Shares.getDownloadUrl(token);
+        const resp  = await fetch(dlUrl);
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          const errCode = errData.error || '';
+          if (errCode === 'DOWNLOAD_LIMIT_REACHED') {
+            showToast('error', 'Limit Reached', 'This file has reached its maximum download count.');
+            showError('Limit Reached', 'The download limit for this file has been reached.');
+          } else if (errCode === 'SHARE_EXPIRED') {
+            showToast('error', 'Link Expired', 'This share link has expired.');
+            showError('Share Expired', 'This share link has expired.');
+          } else {
+            showToast('error', 'Download Failed', errCode || 'An unexpected error occurred.');
+          }
+          btn.classList.remove('loading');
+          return;
+        }
+
+        // Trigger browser download from blob
+        const blob = await resp.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = shareData.original_name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast('success', 'Download Started', `${shareData.original_name} is downloading.`);
+
+        // Refresh count
+        setTimeout(async () => {
+          try {
+            const { share: updated } = await Shares.getInfo(token);
+            renderMeta(updated.download_count);
+          } catch (_) {}
+        }, 800);
+
+      } catch (err) {
+        showToast('error', 'Download Failed', 'Network error. Please try again.');
+      }
+      btn.classList.remove('loading');
+    });
+
+    document.getElementById('state-loading').style.display = 'none';
+    document.getElementById('state-ready').style.display   = '';
+  } catch (err) {
+    showError('Not Found', 'This share does not exist or has been revoked.');
+  }
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    window.location.href = window.location.href.replace(/\/[^/]*(\?.*)?$/, '/index.html');
+  });
+
+  function showError(title, msg) {
+    document.getElementById('state-loading').style.display = 'none';
+    document.getElementById('state-ready').style.display   = 'none';
+    document.getElementById('err-title').textContent = title;
+    document.getElementById('err-msg').textContent   = msg;
+    document.getElementById('state-error').style.display = '';
+  }
+})();
+</script>
+</body>
+</html>

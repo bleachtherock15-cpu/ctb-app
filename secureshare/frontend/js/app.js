@@ -1,0 +1,444 @@
+// ═══════════════════════════════════════════════
+//  app.js — SecureShare v4
+// ═══════════════════════════════════════════════
+
+/* ── Auth ────────────────────────────────────── */
+let authMode = 'si';
+
+window.addEventListener('DOMContentLoaded', async () => {
+  if (Auth.isLoggedIn()) startApp();
+  setInterval(() => {}, 1000);
+});
+
+function setMode(m) {
+  authMode = m;
+  document.getElementById('mb-si').className = 'mb-btn' + (m === 'si' ? ' on' : '');
+  document.getElementById('mb-su').className = 'mb-btn' + (m === 'su' ? ' on' : '');
+  const isLogin = m === 'si';
+  document.getElementById('auth-title').textContent = isLogin ? 'Welcome back' : 'Create account';
+  document.getElementById('auth-desc').textContent  = isLogin ? 'Sign in to continue' : 'Fill in your details below';
+  document.getElementById('a-btn').textContent      = isLogin ? 'Sign In' : 'Create Account';
+  document.getElementById('a-msg').innerHTML = '';
+}
+
+async function doAuth() {
+  const email = document.getElementById('a-email').value.trim();
+  const pass  = document.getElementById('a-pass').value;
+  const msg   = document.getElementById('a-msg');
+  const btn   = document.getElementById('a-btn');
+
+  if (!email || !pass) { msg.innerHTML = '<div class="emsg">Email and password are required.</div>'; return; }
+  if (pass.length < 6) { msg.innerHTML = '<div class="emsg">Password must be at least 6 characters.</div>'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+
+  try {
+    if (authMode === 'si') await Auth.login(email, pass);
+    else await Auth.register(email, pass);
+    startApp();
+  } catch (err) {
+    const map = {
+      INVALID_CREDENTIALS:     'Invalid email or password.',
+      EMAIL_ALREADY_REGISTERED:'Email already registered.',
+      INVALID_EMAIL_FORMAT:    'Invalid email format.',
+    };
+    msg.innerHTML = `<div class="emsg">${map[err.message] || err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'si' ? 'Sign In' : 'Create Account';
+  }
+}
+
+function startApp() {
+  const user = Auth.getUser();
+  document.getElementById('auth').classList.add('off');
+  document.getElementById('app').style.display = 'flex';
+  if (user) {
+    document.getElementById('sb-email').textContent = user.email;
+    document.getElementById('sb-av').textContent    = user.email[0].toUpperCase();
+    document.getElementById('user-email').textContent = user.email;
+  }
+  goPage('dash');
+  loadShares();
+}
+
+function signOut() { Auth.logout(); }
+
+/* ── Navigation ──────────────────────────────── */
+const PAGE_CFG = {
+  dash: { cls: 'a-c', accent: 'var(--blue)' },
+  kit:  { cls: 'a-g', accent: 'var(--green)' },
+  geo:  { cls: 'a-t', accent: 'var(--teal)' },
+};
+
+function goPage(p) {
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
+  document.getElementById('p-' + p).classList.add('on');
+
+  ['dash', 'kit', 'geo'].forEach(id => {
+    const ni = document.getElementById('ni-' + id);
+    ni.className = 'ni';
+  });
+
+  const ni = document.getElementById('ni-' + p);
+  ni.classList.add(PAGE_CFG[p].cls);
+
+  // Update icon colors
+  ['kit', 'geo'].forEach(id => {
+    const ico = document.getElementById('ni-' + id + '-ico');
+    if (ico) ico.setAttribute('stroke', id === p ? PAGE_CFG[p]?.accent || 'var(--tx-3)' : 'var(--tx-3)');
+  });
+}
+
+/* ── File Share ──────────────────────────────── */
+let upFile = null;
+
+function upDrop(e)  { e.preventDefault(); document.getElementById('up-dz').classList.remove('drag'); setUpFile(e.dataTransfer.files[0]); }
+function upSelect(e){ setUpFile(e.target.files[0]); }
+
+function setUpFile(f) {
+  if (!f) return;
+  upFile = f;
+  document.getElementById('up-dz').classList.add('has-file');
+  document.getElementById('up-dz-t').textContent = f.name;
+  document.getElementById('up-dz-t').style.color = 'var(--tx-1)';
+  document.getElementById('up-dz-s').textContent = fmtSz(f.size) + ' · ' + (f.type || 'unknown');
+}
+
+async function doUpload() {
+  if (!upFile) { notify('No file selected.', true); return; }
+
+  const btn = document.querySelector('.btn[onclick="doUpload()"]') || document.querySelector('button[onclick="doUpload()"]');
+  if (btn) btn.disabled = true;
+
+  const pw  = document.getElementById('up-prog');
+  const bar = document.getElementById('up-bar');
+  const pct = document.getElementById('up-pct');
+  pw.style.display = 'block';
+  document.getElementById('up-err').innerHTML = '';
+
+  try {
+    const ttl   = document.getElementById('up-ttl').value;
+    const maxDl = document.getElementById('up-mdl').value;
+    await Shares.upload(upFile, { ttl, maxDownloads: maxDl }, p => {
+      bar.style.width   = p + '%';
+      pct.textContent   = 'Uploading... ' + p + '%';
+    });
+    bar.style.width = '100%';
+    pct.textContent = 'Complete!';
+    notify('File uploaded successfully!');
+    await loadShares();
+    setTimeout(() => {
+      pw.style.display = 'none';
+      if (btn) btn.disabled = false;
+      upFile = null;
+      document.getElementById('up-dz').classList.remove('has-file');
+      document.getElementById('up-dz-t').textContent = 'Drop file here to upload';
+      document.getElementById('up-dz-t').style.color = '';
+      document.getElementById('up-dz-s').textContent = 'or click to browse · Max 50 MB';
+      document.getElementById('up-ttl').value = '24';
+      document.getElementById('up-mdl').value = '';
+    }, 800);
+  } catch (err) {
+    pw.style.display = 'none';
+    if (btn) btn.disabled = false;
+    document.getElementById('up-err').innerHTML = `<div class="emsg">${err.message}</div>`;
+    notify('Upload failed: ' + err.message, true);
+  }
+}
+
+async function loadShares() {
+  try {
+    const { shares } = await Shares.list();
+    renderShares(shares);
+  } catch (e) { console.error(e); }
+}
+
+function renderShares(shares) {
+  document.getElementById('sh-cnt').textContent = '(' + shares.length + ')';
+  const list = document.getElementById('sh-list');
+  if (!shares.length) {
+    list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--tx-3);font-size:13px">No active transfers</div>';
+    return;
+  }
+  list.innerHTML = shares.map(s => {
+    const dead = s.expired || s.limit_reached;
+    const tl   = ttlLeft(s.expires_at);
+    const dotC = dead ? 'var(--tx-3)' : 'var(--green)';
+    return `<div class="sr ${dead ? 'dead' : ''}">
+      <div class="sr-dot" style="background:${dotC};${dead ? '' : 'box-shadow:0 0 6px var(--green)'}"></div>
+      <div class="sr-info">
+        <div class="sr-name">${escHtml(s.original_name)}</div>
+        <div class="sr-meta">
+          <span>${fmtSz(s.file_size)}</span>
+          <span style="${s.expired ? 'color:var(--red)' : ''}">Expires: ${tl}</span>
+          <span style="${s.limit_reached ? 'color:var(--amber)' : ''}">Downloads: ${s.download_count}${s.max_downloads ? '/' + s.max_downloads : ''}</span>
+          ${s.expired ? '<span class="badge bdg-red">Expired</span>' : ''}
+          ${s.limit_reached ? '<span class="badge bdg-amber">Limit reached</span>' : ''}
+        </div>
+      </div>
+      <div class="sr-act">
+        ${!dead ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">Download</a>` : ''}
+        ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">Copy link</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="delShare('${s.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyShareLink(token, btn) {
+  const url = Shares.getShareLink(token);
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = orig, 1800);
+    notify('Share link copied!');
+  });
+}
+
+async function delShare(id) {
+  try {
+    await Shares.delete(id);
+    notify('Share deleted.');
+    await loadShares();
+  } catch (err) { notify('Delete failed: ' + err.message, true); }
+}
+
+/* ── Toolkit ─────────────────────────────────── */
+function showTool(t) {
+  document.querySelectorAll('.tp').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.kit-tab').forEach(b => b.classList.remove('kt-active'));
+  document.getElementById('tp-' + t).classList.add('on');
+  document.getElementById('tt-' + t).classList.add('kt-active');
+}
+
+/* HASH */
+let hm = 'file', hFile = null;
+
+function setHM(m) {
+  hm = m;
+  document.getElementById('h-fz').style.display = m === 'file' ? '' : 'none';
+  document.getElementById('h-tz').style.display = m === 'text' ? '' : 'none';
+  const f = document.getElementById('hm-file'), tx = document.getElementById('hm-text');
+  if (m === 'file') { f.classList.add('kms-on'); tx.classList.remove('kms-on'); }
+  else { tx.classList.add('kms-on'); f.classList.remove('kms-on'); }
+}
+function hfSel(e)  { hFile = e.target.files[0]; const fn = document.getElementById('h-fn'); fn.textContent = hFile.name; fn.style.color = 'var(--tx-1)'; }
+function hfDrop(e) { e.preventDefault(); hFile = e.dataTransfer.files[0]; document.getElementById('h-fn').textContent = hFile.name; document.getElementById('h-fn').style.color = 'var(--tx-1)'; }
+
+async function runHash() {
+  const res = document.getElementById('h-res');
+  res.classList.remove('on'); res.innerHTML = '';
+  let buf;
+  if (hm === 'file') {
+    if (!hFile) { notify('Please select a file.', true); return; }
+    buf = await hFile.arrayBuffer();
+  } else {
+    const t = document.getElementById('h-ti').value;
+    if (!t.trim()) { notify('Please enter text.', true); return; }
+    buf = new TextEncoder().encode(t).buffer;
+  }
+  const hashes = await hashAll(buf);
+  const meta = { md5: { color: 'var(--amber)', label: 'MD5' }, sha1: { color: 'var(--red)', label: 'SHA-1' }, sha256: { color: 'var(--blue)', label: 'SHA-256' } };
+  res.innerHTML = `<div class="card"><div class="cb">` +
+    Object.entries(hashes).map(([k, v]) => `
+      <div style="padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span class="badge" style="color:${meta[k].color};border-color:${meta[k].color}33;background:${meta[k].color}11">${meta[k].label}</span>
+          <button onclick="cpText('${v}',this)" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--tx-1)';this.style.background='var(--bg-4)'" onmouseout="this.style.color='var(--tx-3)';this.style.background='none'">Copy</button>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tx-1);word-break:break-all;line-height:1.6">${v}</div>
+      </div>`).join('') +
+    `</div></div>`;
+  res.classList.add('on');
+}
+
+function cpText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent; btn.textContent = '✓ Copied'; btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1800);
+    notify('Copied to clipboard!');
+  });
+}
+
+/* URL SCANNER */
+function runUrl() {
+  const raw = document.getElementById('url-inp').value.trim();
+  if (!raw) return;
+  const R   = analyzeUrl(raw);
+  const cMap = { Low: 'var(--green)', Medium: 'var(--amber)', High: 'var(--red)' };
+  const c    = cMap[R.riskLevel];
+  const circ = 2 * Math.PI * 36;
+  const res  = document.getElementById('url-res');
+  res.innerHTML = `<div class="card"><div class="cb">
+    <div style="display:flex;align-items:center;gap:20px;padding:16px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:16px">
+      <svg width="84" height="84" viewBox="0 0 84 84" style="flex-shrink:0">
+        <circle cx="42" cy="42" r="36" fill="none" stroke="var(--bg-4)" stroke-width="5" transform="rotate(-90 42 42)"/>
+        <circle cx="42" cy="42" r="36" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round" transform="rotate(-90 42 42)" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ * (1 - R.score / 100)).toFixed(1)}" style="filter:drop-shadow(0 0 6px ${c})"/>
+        <text x="42" y="46" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="16" font-weight="500" fill="${c}">${R.score}</text>
+      </svg>
+      <div style="flex:1">
+        <div class="badge mb8" style="color:${c};border-color:${c}44;background:${c}11">${R.riskLevel.toUpperCase()} RISK</div>
+        <div style="font-size:14px;font-weight:700;color:var(--tx-1);margin-bottom:6px">${R.explanation}</div>
+        <div class="ptrack"><div style="height:100%;width:${R.score}%;background:${c};transition:width .6s ease"></div></div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px"><label class="lbl">URL Analyzed</label><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tx-2);word-break:break-all;padding:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">${R.url}</div></div>
+    ${R.indicators.length ? `<div><label class="lbl">Risk Indicators</label><div style="display:flex;flex-direction:column;gap:6px">${R.indicators.map(i => `<div style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--tx-2)"><span style="color:${c};flex-shrink:0">•</span>${i}</div>`).join('')}</div></div>` : ''}
+  </div></div>`;
+  res.classList.add('on');
+}
+
+function analyzeUrl(raw) {
+  let url = raw.trim(); if (!url.startsWith('http')) url = 'https://' + url;
+  let parsed; try { parsed = new URL(url); } catch { return { url: raw, riskLevel: 'High', score: 90, indicators: ['Invalid URL format'], explanation: 'Malformed URL.' }; }
+  const host = parsed.hostname.toLowerCase(), path = parsed.pathname + parsed.search;
+  let score = 0; const ind = [];
+  const shorteners = ['bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly', 'is.gd', 'buff.ly', 'rb.gy', 'cutt.ly'];
+  const badTlds    = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top', '.click', '.download', '.loan'];
+  const phishKw    = ['login', 'signin', 'verify', 'secure', 'update', 'confirm', 'banking', 'paypal', 'amazon', 'apple', 'microsoft', 'google', 'facebook', 'password', 'credential', 'wallet', 'prize', 'urgent', 'suspended', 'locked'];
+  const legit      = ['google.com', 'youtube.com', 'facebook.com', 'twitter.com', 'instagram.com', 'linkedin.com', 'github.com', 'reddit.com', 'wikipedia.org', 'amazon.com', 'microsoft.com', 'apple.com', 'netflix.com'];
+  if (parsed.protocol === 'http:') { score += 20; ind.push('Uses insecure HTTP instead of HTTPS'); }
+  if (shorteners.some(s => host === s || host.endsWith('.' + s))) { score += 25; ind.push('URL shortener — real destination is hidden'); }
+  const bt = badTlds.find(t => host.endsWith(t)); if (bt) { score += 20; ind.push('Suspicious TLD: ' + bt); }
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) { score += 35; ind.push('Raw IP address used instead of domain name'); }
+  if (host.split('.').length > 4) { score += 15; ind.push('Excessive subdomains: ' + host); }
+  const full = (host + path).toLowerCase(); const matched = phishKw.filter(k => full.includes(k));
+  if (matched.length >= 2) { score += 22; ind.push('Multiple phishing keywords: ' + matched.slice(0, 3).join(', ')); }
+  else if (matched.length === 1) { score += 9; ind.push('Phishing keyword detected: ' + matched[0]); }
+  if (url.length > 200) { score += 10; ind.push('Abnormally long URL (possible obfuscation)'); }
+  if (legit.some(l => host === l || host.endsWith('.' + l))) score = Math.max(0, score - 40);
+  score = Math.min(100, Math.max(0, score));
+  const lvl = score >= 60 ? 'High' : score >= 25 ? 'Medium' : 'Low';
+  const exp = { Low: 'No significant threats detected. URL appears legitimate.', Medium: 'Some suspicious characteristics found. Verify before visiting.', High: 'Multiple risk indicators detected. Likely malicious URL.' };
+  return { url: parsed.toString(), riskLevel: lvl, score, indicators: ind, explanation: exp[lvl] };
+}
+
+/* PASSWORD */
+let pwVis = false;
+function togglePw() { pwVis = !pwVis; document.getElementById('pw-inp').type = pwVis ? 'text' : 'password'; document.getElementById('pw-show').textContent = pwVis ? 'HIDE' : 'SHOW'; }
+function runPw(pw) {
+  if (!pw) { document.getElementById('pw-bar-wrap').style.display = 'none'; document.getElementById('pw-res').classList.remove('on'); return; }
+  const checks = [
+    { l: 'At least 8 characters', p: pw.length >= 8 }, { l: 'At least 12 characters', p: pw.length >= 12 },
+    { l: 'Lowercase letters', p: /[a-z]/.test(pw) }, { l: 'Uppercase letters', p: /[A-Z]/.test(pw) },
+    { l: 'Numbers', p: /[0-9]/.test(pw) }, { l: 'Special characters', p: /[^a-zA-Z0-9]/.test(pw) },
+    { l: 'No common passwords', p: !['password', '123456', 'qwerty', 'abc123'].includes(pw.toLowerCase()) },
+    { l: 'No repeated characters', p: !/(.)\1{2,}/.test(pw) },
+  ];
+  const pool = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].reduce((a, r, i) => a + (r.test(pw) ? [26, 26, 10, 32][i] : 0), 0);
+  const ent  = pw.length * Math.log2(pool || 1);
+  const str  = ent < 25 ? 'Very Weak' : ent < 40 ? 'Weak' : ent < 55 ? 'Fair' : ent < 75 ? 'Strong' : 'Very Strong';
+  const sMap = {
+    'Very Weak':  { c: 'var(--red)',    w: '8%',   l: 'CRITICAL' },
+    'Weak':       { c: '#e06c75',       w: '22%',  l: 'WEAK' },
+    'Fair':       { c: 'var(--amber)',  w: '48%',  l: 'MODERATE' },
+    'Strong':     { c: 'var(--blue)',   w: '74%',  l: 'STRONG' },
+    'Very Strong':{ c: 'var(--green)', w: '100%', l: 'HARDENED' },
+  };
+  const cfg  = sMap[str];
+  const gpuR = 1e10; const secs = Math.pow(2, ent) / gpuR;
+  const ct = secs < 1 ? 'Instant' : secs < 60 ? Math.round(secs) + 's' : secs < 3600 ? Math.round(secs / 60) + ' min' : secs < 86400 ? Math.round(secs / 3600) + ' hrs' : secs < 2592000 ? Math.round(secs / 86400) + ' days' : secs < 31536000 ? Math.round(secs / 2592000) + ' months' : secs < 3.15e9 ? Math.round(secs / 31536000) + ' years' : 'Centuries+';
+  const score = Math.round(checks.filter(c => c.p).length / checks.length * 100);
+  const sug = [];
+  if (pw.length < 8) sug.push('Use at least 8 characters');
+  if (pw.length < 12) sug.push('Increase to 12+ characters for better security');
+  if (!/[a-z]/.test(pw)) sug.push('Add lowercase letters');
+  if (!/[A-Z]/.test(pw)) sug.push('Add uppercase letters');
+  if (!/[0-9]/.test(pw)) sug.push('Include numbers');
+  if (!/[^a-zA-Z0-9]/.test(pw)) sug.push('Add special characters (!@#$%^&*)');
+  document.getElementById('pw-bar-wrap').style.display = '';
+  document.getElementById('pw-str-lbl').textContent = cfg.l;
+  document.getElementById('pw-str-lbl').style.color = cfg.c;
+  document.getElementById('pw-ent-lbl').textContent = ent.toFixed(1) + ' bits';
+  const segCount = { 'Very Weak': 1, 'Weak': 2, 'Fair': 3, 'Strong': 4, 'Very Strong': 4 }[str];
+  document.querySelectorAll('.kit-pw-seg').forEach((s, i) => {
+    s.classList.toggle('on', i < segCount);
+    s.style.background = i < segCount ? cfg.c : '';
+  });
+  const res = document.getElementById('pw-res');
+  res.innerHTML = `<div class="card"><div class="cb">
+    <div class="g3 mb16">
+      <div style="text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">
+        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Score</div>
+        <div style="font-size:24px;font-weight:800;color:${cfg.c}">${score}<span style="font-size:12px;opacity:.6">/100</span></div>
+      </div>
+      <div style="text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">
+        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Length</div>
+        <div style="font-size:24px;font-weight:800;color:${cfg.c}">${pw.length}</div>
+      </div>
+      <div style="text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">
+        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Crack time</div>
+        <div style="font-size:14px;font-weight:800;color:${cfg.c}">${ct}</div>
+      </div>
+    </div>
+    <label class="lbl mb8">Security checklist</label>
+    <div class="ck-grid mb12">${checks.map(c => `<div class="ck-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c.p ? 'var(--green)' : 'var(--tx-3)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${c.p ? '<polyline points="20 6 9 17 4 12"/>' : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}</svg><span style="color:${c.p ? 'var(--tx-1)' : 'var(--tx-3)'}">${c.l}</span></div>`).join('')}</div>
+    ${sug.length ? `<label class="lbl mb8">Suggestions</label><div style="display:flex;flex-direction:column;gap:5px">${sug.map(s => `<div style="font-size:12px;color:var(--tx-2);display:flex;gap:7px;align-items:center"><span style="color:var(--blue)">→</span>${s}</div>`).join('')}</div>` : ''}
+  </div></div>`;
+  res.classList.add('on');
+}
+
+/* FILE METADATA */
+function metaSel(e)  { analyzeMeta(e.target.files[0]); }
+function metaDrop(e) { e.preventDefault(); document.getElementById('meta-dz').classList.remove('drag'); analyzeMeta(e.dataTransfer.files[0]); }
+function analyzeMeta(f) {
+  if (!f) return;
+  document.getElementById('meta-lbl').textContent = 'Analyzing: ' + f.name;
+  const ext    = (f.name.match(/(\.[^.]+)$/) || [''])[0].toLowerCase();
+  const execE  = new Set(['.exe', '.bat', '.cmd', '.ps1', '.vbs', '.sh', '.jar', '.dmg', '.msi', '.dll', '.scr']);
+  const execT  = new Set(['application/x-msdownload', 'application/x-executable', 'application/x-sh']);
+  const isExec = execT.has(f.type) || execE.has(ext);
+  const sus = [];
+  if (isExec) sus.push('Executable file type: ' + (ext || f.type));
+  if (!ext) sus.push('No file extension');
+  if (f.size === 0) sus.push('File is empty (0 bytes)');
+  const r = new FileReader();
+  r.onload = e => {
+    const arr   = new Uint8Array(e.target.result);
+    const magic = Array.from(arr.slice(0, 8)).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+    const res   = document.getElementById('meta-res');
+    res.innerHTML = `<div class="card"><div class="cb">
+      ${sus.length ? `<div class="emsg mb12"><strong>⚠ Threats detected</strong><br>${sus.map(s => '• ' + s).join('<br>')}</div>` : ''}
+      <label class="lbl mb8">File Information</label>
+      ${[['Filename', f.name], ['MIME Type', f.type || 'unknown'], ['Extension', ext || '(none)'], ['File Size', fmtSzD(f.size)], ['Last Modified', new Date(f.lastModified).toLocaleString()], ['Magic Bytes', magic]].map(([k, v]) => `<div class="mr"><span class="mk">${k}</span><span class="mv">${v}</span></div>`).join('')}
+      ${isExec ? '<div class="wmsg mt12">⚡ Executable file — handle with caution</div>' : ''}
+    </div></div>`;
+    res.classList.add('on');
+  };
+  r.readAsArrayBuffer(f.slice(0, 16));
+}
+
+/* ── Utilities ───────────────────────────────── */
+function fmtSz(b)  { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
+function fmtSzD(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(2) + ' KB'; if (b < 1073741824) return (b / 1048576).toFixed(2) + ' MB'; return (b / 1073741824).toFixed(2) + ' GB'; }
+function ttlLeft(exp) { if (!exp) return 'Never'; const d = new Date(exp) - Date.now(); if (d <= 0) return 'Expired'; const h = Math.floor(d / 3600000), days = Math.floor(h / 24); if (days > 0) return days + 'd ' + (h % 24) + 'h'; if (h > 0) return h + 'h'; return Math.floor(d / 60000) + 'm'; }
+function escHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+let ntTimer;
+function notify(msg, err = false) {
+  const el   = document.getElementById('notif');
+  const icon = document.getElementById('notif-icon');
+  document.getElementById('notif-msg').textContent = msg;
+  el.className = err ? 'on er' : 'on ok';
+  if (err) icon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+  else icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+  icon.setAttribute('stroke', err ? 'var(--red)' : 'var(--green)');
+  clearTimeout(ntTimer);
+  ntTimer = setTimeout(() => el.classList.remove('on', 'er', 'ok'), 2800);
+}
+
+// Fix: expose user-email element (sidebar)
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('user-email');
+  if (!el) {
+    const span = document.createElement('span');
+    span.id = 'user-email';
+    span.style.display = 'none';
+    document.body.appendChild(span);
+  }
+});
+
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop',     e => e.preventDefault());
