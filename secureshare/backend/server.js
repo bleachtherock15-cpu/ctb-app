@@ -30,7 +30,7 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min — login/register
-  max: 10,                   // ลดจาก 20 → 10 ครั้ง
+  max: 30,
   message: { error: 'TOO_MANY_AUTH_ATTEMPTS' },
   standardHeaders: true,
   legacyHeaders: false,
