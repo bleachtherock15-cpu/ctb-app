@@ -11,6 +11,9 @@ const geoRoutes    = require('./routes/geo');
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust Railway/proxy reverse proxy
+app.set('trust proxy', 1);
+
 // ── Middleware ────────────────────────────────────────────
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' ? true : (process.env.FRONTEND_URL || 'http://localhost:5500'),
