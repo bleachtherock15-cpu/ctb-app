@@ -1,0 +1,11 @@
+{
+  "name": "ctb-cyber-tool-box",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd secureshare/backend && node server.js",
+    "install": "cd secureshare/backend && npm install"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
