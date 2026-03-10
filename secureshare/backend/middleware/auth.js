@@ -9,7 +9,7 @@ module.exports = function authMiddleware(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ctb_fallback_secret_change_me');
     req.user = decoded;
     next();
   } catch (err) {
