@@ -15,9 +15,9 @@ function setMode(m) {
   document.getElementById('mb-si').className = 'mb-btn' + (m === 'si' ? ' on' : '');
   document.getElementById('mb-su').className = 'mb-btn' + (m === 'su' ? ' on' : '');
   const isLogin = m === 'si';
-  document.getElementById('auth-title').textContent = isLogin ? 'Welcome back' : 'Create account';
-  document.getElementById('auth-desc').textContent  = isLogin ? 'Sign in to continue' : 'Fill in your details below';
-  document.getElementById('a-btn').textContent      = isLogin ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-title').textContent = isLogin ? 'SYSTEM ACCESS' : 'NEW OPERATIVE';
+  document.getElementById('auth-desc').textContent  = isLogin ? 'authenticate to proceed' : 'register new credentials';
+  document.getElementById('a-btn').textContent      = isLogin ? 'AUTHENTICATE' : 'REGISTER';
   document.getElementById('a-msg').innerHTML = '';
 }
 
@@ -67,27 +67,47 @@ function signOut() { Auth.logout(); }
 
 /* ── Navigation ──────────────────────────────── */
 const PAGE_CFG = {
-  dash: { cls: 'a-c', accent: 'var(--blue)' },
-  kit:  { cls: 'a-g', accent: 'var(--green)' },
+  dash: { cls: 'a-c', accent: 'var(--teal)' },
+  hash: { cls: 'a-p', accent: 'var(--pink)' },
+  url:  { cls: 'a-g', accent: 'var(--green)' },
+  pass: { cls: 'a-t', accent: 'var(--amber)' },
   geo:  { cls: 'a-t', accent: 'var(--teal)' },
 };
 
+const ALL_PAGES = ['dash', 'hash', 'url', 'pass', 'geo'];
+
+/* ── Mobile nav toggle ──────────────────────────────────────── */
+function toggleNav() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.getElementById('sidebar-overlay');
+  const open = sb.classList.toggle('mob-open');
+  ov.classList.toggle('show', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+
+function closeNav() {
+  document.querySelector('.sidebar').classList.remove('mob-open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
 function goPage(p) {
+  closeNav();
   document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
   document.getElementById('p-' + p).classList.add('on');
 
-  ['dash', 'kit', 'geo'].forEach(id => {
+  ALL_PAGES.forEach(id => {
     const ni = document.getElementById('ni-' + id);
-    ni.className = 'ni';
+    if (ni) ni.className = 'ni';
   });
 
   const ni = document.getElementById('ni-' + p);
-  ni.classList.add(PAGE_CFG[p].cls);
+  if (ni) ni.classList.add(PAGE_CFG[p].cls);
 
   // Update icon colors
-  ['kit', 'geo'].forEach(id => {
+  ALL_PAGES.filter(id => id !== 'dash').forEach(id => {
     const ico = document.getElementById('ni-' + id + '-ico');
-    if (ico) ico.setAttribute('stroke', id === p ? PAGE_CFG[p]?.accent || 'var(--tx-3)' : 'var(--tx-3)');
+    if (ico) ico.setAttribute('stroke', id === p ? (PAGE_CFG[p]?.accent || 'var(--tx-3)') : 'var(--tx-3)');
   });
 }
 
