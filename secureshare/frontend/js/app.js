@@ -61,6 +61,7 @@ function startApp() {
   }
   goPage('dash');
   loadShares();
+  setInterval(loadShares, 30000);
 }
 
 function signOut() { Auth.logout(); }
