@@ -494,3 +494,51 @@ input[type=file]{display:none}
 @media (max-width:400px){
   .page{padding:14px 10px 24px}
 }
+
+/* ── Section-identity colorization ──────────────── */
+
+/* Nav icon tints — each tool has its own color identity */
+#ni-dash .ni-icon{background:rgba(13,148,136,.08);border-color:rgba(13,148,136,.18)}
+#ni-dash .ni-icon svg{stroke:var(--cyan)}
+#ni-hash .ni-icon{background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.18)}
+#ni-hash .ni-icon svg{stroke:var(--purple)}
+#ni-url .ni-icon{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.18)}
+#ni-url .ni-icon svg{stroke:var(--green)}
+#ni-pass .ni-icon{background:rgba(217,119,6,.08);border-color:rgba(217,119,6,.18)}
+#ni-pass .ni-icon svg{stroke:var(--amber)}
+#ni-geo .ni-icon{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.18)}
+#ni-geo .ni-icon svg{stroke:#6366f1}
+
+/* Page eyebrow color per section */
+#p-hash .ch-eyebrow{color:var(--purple)}
+#p-hash .ch-eyebrow::before{background:var(--purple)}
+#p-url  .ch-eyebrow{color:var(--green)}
+#p-url  .ch-eyebrow::before{background:var(--green)}
+#p-pass .ch-eyebrow{color:var(--amber)}
+#p-pass .ch-eyebrow::before{background:var(--amber)}
+#p-geo  .ch-eyebrow{color:#6366f1}
+#p-geo  .ch-eyebrow::before{background:#6366f1}
+
+/* GeoSight feature cards — colored left border per clue type */
+#p-geo .g4 .card:nth-child(1){border-left:3px solid var(--amber)}
+#p-geo .g4 .card:nth-child(2){border-left:3px solid #6366f1}
+#p-geo .g4 .card:nth-child(3){border-left:3px solid var(--green)}
+#p-geo .g4 .card:nth-child(4){border-left:3px solid var(--cyan)}
+
+/* Auth eyebrow — teal warmth */
+.auth-form-panel [style*="CTB // CYBER"]{color:var(--cyan) !important}
+
+/* Geo confidence ring uses indigo on GeoSight */
+#geo-conf-arc{stroke:#6366f1}
+.geo-ring-pct{color:#6366f1}
+.geo-region{color:#6366f1}
+.geo-conf-card{background:rgba(99,102,241,.05);border-color:rgba(99,102,241,.14)}
+
+/* URL scan result accent — green */
+#p-url .rp.on .card{border-left:3px solid var(--green)}
+
+/* Hash result accent — purple */
+#p-hash .rp.on .card{border-left:3px solid var(--purple)}
+
+/* Password result accent — amber */
+#p-pass .rp.on .card{border-left:3px solid var(--amber)}
