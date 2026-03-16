@@ -34,12 +34,32 @@ db.exec(`
     expires_at     TEXT,
     max_downloads  INTEGER,
     download_count INTEGER NOT NULL DEFAULT 0,
+    password_hash  TEXT,
     created_at     TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
   CREATE INDEX IF NOT EXISTS idx_shares_token ON shares(token);
   CREATE INDEX IF NOT EXISTS idx_shares_user  ON shares(user_id);
+
+  CREATE TABLE IF NOT EXISTS download_logs (
+    id          TEXT PRIMARY KEY,
+    share_id    TEXT NOT NULL,
+    ip          TEXT,
+    user_agent  TEXT,
+    country     TEXT,
+    city        TEXT,
+    isp         TEXT,
+    downloaded_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (share_id) REFERENCES shares(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_dlogs_share ON download_logs(share_id);
 `);
+
+// Migration: add password_hash column if not exists
+try {
+  db.exec(`ALTER TABLE shares ADD COLUMN password_hash TEXT`);
+} catch (_) { /* column already exists */ }
 
 module.exports = db;

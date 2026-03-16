@@ -139,9 +139,10 @@ async function doUpload() {
   document.getElementById('up-err').innerHTML = '';
 
   try {
-    const ttl   = document.getElementById('up-ttl').value;
-    const maxDl = document.getElementById('up-mdl').value;
-    await Shares.upload(upFile, { ttl, maxDownloads: maxDl }, p => {
+    const ttl      = document.getElementById('up-ttl').value;
+    const maxDl    = document.getElementById('up-mdl').value;
+    const password = document.getElementById('up-pw').value.trim();
+    await Shares.upload(upFile, { ttl, maxDownloads: maxDl, password: password || undefined }, p => {
       bar.style.width   = p + '%';
       pct.textContent   = 'Uploading... ' + p + '%';
     });
@@ -159,6 +160,7 @@ async function doUpload() {
       document.getElementById('up-dz-s').textContent = 'or click to browse · Max 50 MB';
       document.getElementById('up-ttl').value = '24';
       document.getElementById('up-mdl').value = '';
+      document.getElementById('up-pw').value = '';
     }, 800);
   } catch (err) {
     pw.style.display = 'none';
@@ -176,7 +178,8 @@ async function loadShares() {
 }
 
 function renderShares(shares) {
-  document.getElementById('sh-cnt').textContent = '(' + shares.length + ')';
+  const activeCount = shares.filter(s => !s.expired && !s.limit_reached).length;
+  document.getElementById('sh-cnt').textContent = '(' + activeCount + ')';
   const list = document.getElementById('sh-list');
   if (!shares.length) {
     list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--tx-3);font-size:13px">No active transfers</div>';
@@ -186,23 +189,37 @@ function renderShares(shares) {
     const dead = s.expired || s.limit_reached;
     const tl   = ttlLeft(s.expires_at);
     const dotC = dead ? 'var(--tx-3)' : 'var(--green)';
-    return `<div class="sr ${dead ? 'dead' : ''}">
-      <div class="sr-dot" style="background:${dotC};${dead ? '' : 'box-shadow:0 0 6px var(--green)'}"></div>
-      <div class="sr-info">
-        <div class="sr-name">${escHtml(s.original_name)}</div>
-        <div class="sr-meta">
-          <span>${fmtSz(s.file_size)}</span>
-          <span style="${s.expired ? 'color:var(--red)' : ''}">Expires: ${tl}</span>
-          <span style="${s.limit_reached ? 'color:var(--amber)' : ''}">Downloads: ${s.download_count}${s.max_downloads ? '/' + s.max_downloads : ''}</span>
-          ${s.expired ? '<span class="badge bdg-red">Expired</span>' : ''}
-          ${s.limit_reached ? '<span class="badge bdg-amber">Limit reached</span>' : ''}
+    return `<div class="sr-wrap">
+      <div class="sr ${dead ? 'dead' : ''}">
+        <div class="sr-dot" style="background:${dotC};${dead ? '' : 'box-shadow:0 0 6px var(--green)'}"></div>
+        <div class="sr-info">
+          <div class="sr-name">${escHtml(s.original_name)}</div>
+          <div class="sr-meta">
+            <span>${fmtSz(s.file_size)}</span>
+            <span style="${s.expired ? 'color:var(--red)' : ''}">Expires: ${tl}</span>
+            <span style="${s.limit_reached ? 'color:var(--amber)' : ''}">Downloads: ${s.download_count}${s.max_downloads ? '/' + s.max_downloads : ''}</span>
+            ${s.expired ? '<span class="badge bdg-red">Expired</span>' : ''}
+            ${s.limit_reached ? '<span class="badge bdg-amber">Limit reached</span>' : ''}
+          </div>
+        </div>
+        <div class="sr-act">
+          ${!dead && s.has_password ? `<button class="btn btn-ghost btn-sm" onclick="openPwModal('${s.token}','${escHtml(s.original_name)}')">🔒 Download</button>` : ''}
+          ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">Download</a>` : ''}
+          ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">Copy link</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="toggleLogs('${s.id}',this)" title="ดูประวัติดาวน์โหลด">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Logs
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="exportLogsPDF('${s.id}','${escHtml(s.original_name)}')" title="Export PDF">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6M9 11h6M9 18h4"/></svg>
+            PDF
+          </button>
+          ${dead
+            ? `<button title="ลบ" onclick="delShare('${s.id}')" style="width:34px;height:34px;border-radius:7px;border:none;background:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(220,38,38,.35);transition:all .15s" onmouseover="this.style.background='#b91c1c';this.style.transform='scale(1.05)'" onmouseout="this.style.background='#dc2626';this.style.transform='scale(1)'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`
+            : `<button class="btn btn-danger btn-sm" onclick="delShare('${s.id}')">Delete</button>`}
         </div>
       </div>
-      <div class="sr-act">
-        ${!dead ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">Download</a>` : ''}
-        ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">Copy link</button>` : ''}
-        <button class="btn btn-danger btn-sm" onclick="delShare('${s.id}')">Delete</button>
-      </div>
+      <div class="dl-logs" id="logs-${s.id}" style="display:none"></div>
     </div>`;
   }).join('');
 }
@@ -462,3 +479,202 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop',     e => e.preventDefault());
+
+/* ── Password Modal ──────────────────────────── */
+let _pwToken = null;
+
+function openPwModal(token, filename) {
+  _pwToken = token;
+  document.getElementById('pw-filename').textContent = filename;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').style.display = 'none';
+  const m = document.getElementById('pw-modal');
+  m.style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 50);
+}
+
+function closePwModal() {
+  document.getElementById('pw-modal').style.display = 'none';
+  _pwToken = null;
+}
+
+async function submitPwModal() {
+  const pw  = document.getElementById('pw-input').value;
+  const err = document.getElementById('pw-err');
+  const btn = document.getElementById('pw-submit');
+  if (!pw) { err.textContent = 'กรอกรหัสผ่านด้วย'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  btn.textContent = 'กำลังตรวจสอบ...';
+  err.style.display = 'none';
+  try {
+    await Shares.downloadWithPassword(_pwToken, pw);
+    closePwModal();
+    notify('ดาวน์โหลดสำเร็จ!');
+  } catch (e) {
+    err.textContent = e.message === 'WRONG_PASSWORD' ? 'รหัสผ่านไม่ถูกต้อง' : e.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> ดาวน์โหลด';
+  }
+}
+
+function toggleUpPw() {
+  const inp = document.getElementById('up-pw');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+/* ── Download Logs ───────────────────────────── */
+async function toggleLogs(shareId, btn) {
+  const panel = document.getElementById('logs-' + shareId);
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  panel.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:var(--tx-3)">กำลังโหลด...</div>';
+  try {
+    const { logs } = await Shares.getLogs(shareId);
+    if (!logs.length) {
+      panel.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:var(--tx-3);text-align:center">ยังไม่มีประวัติดาวน์โหลด</div>';
+      return;
+    }
+    panel.innerHTML = `
+      <div style="padding:8px 14px 4px;font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--tx-3);letter-spacing:.1em;text-transform:uppercase;border-top:1px solid var(--border)">ประวัติดาวน์โหลด (${logs.length})</div>
+      ${logs.map((l, i) => {
+        const ua    = parseUA(l.user_agent);
+        const time  = new Date(l.downloaded_at).toLocaleString('th-TH', {dateStyle:'short',timeStyle:'short'});
+        const flag  = countryFlag(l.country);
+        return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 14px;border-top:1px solid var(--border);font-size:11px;${i%2===0?'background:var(--bg-1)':''}">
+          <div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--tx-3);flex-shrink:0;min-width:18px;text-align:right;padding-top:1px">${i+1}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+              <span style="font-family:\'JetBrains Mono\',monospace;font-weight:600;color:var(--cyan)">${l.ip}</span>
+              ${l.country ? `<span style="background:rgba(2,132,199,.08);border:1px solid rgba(2,132,199,.15);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--tx-2)">${flag} ${l.city ? l.city+', ' : ''}${l.country}</span>` : ''}
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <span style="color:var(--tx-2)">${ua}</span>
+              ${l.isp ? `<span style="color:var(--tx-3)">· ${l.isp}</span>` : ''}
+              <span style="color:var(--tx-3);margin-left:auto;flex-shrink:0">${time}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}`;
+  } catch(e) {
+    panel.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--red)">โหลด logs ไม่ได้: ${e.message}</div>`;
+  }
+}
+
+function parseUA(ua) {
+  if (!ua) return 'Unknown';
+  if (/iPhone|iPad/.test(ua))        return '📱 iOS';
+  if (/Android/.test(ua))            return '📱 Android';
+  if (/Windows/.test(ua))            return '🖥️ Windows';
+  if (/Macintosh|Mac OS/.test(ua))   return '🖥️ macOS';
+  if (/Linux/.test(ua))              return '🖥️ Linux';
+  return '🌐 Browser';
+}
+
+function countryFlag(country) {
+  if (!country) return '';
+  const flags = { 'Thailand':'🇹🇭','United States':'🇺🇸','Japan':'🇯🇵','China':'🇨🇳','United Kingdom':'🇬🇧','Germany':'🇩🇪','France':'🇫🇷','Singapore':'🇸🇬','South Korea':'🇰🇷','Australia':'🇦🇺','India':'🇮🇳','Canada':'🇨🇦' };
+  return flags[country] || '🌍';
+}
+
+function parseUA_text(ua) {
+  if (!ua) return 'Unknown';
+  if (/iPhone|iPad/.test(ua))       return 'iOS';
+  if (/Android/.test(ua))           return 'Android';
+  if (/Windows/.test(ua))           return 'Windows';
+  if (/Macintosh|Mac OS/.test(ua))  return 'macOS';
+  if (/Linux/.test(ua))             return 'Linux';
+  return 'Browser';
+}
+
+/* ── Export Logs PDF ─────────────────────────── */
+async function exportLogsPDF(shareId, filename) {
+  notify('กำลังสร้าง PDF...');
+  let logs = [];
+  try {
+    const res = await Shares.getLogs(shareId);
+    logs = res.logs;
+  } catch(e) { notify('โหลด logs ไม่ได้', true); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const now = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const pageW = doc.internal.pageSize.getWidth();
+
+  // Header bar
+  doc.setFillColor(2, 132, 199);
+  doc.rect(0, 0, pageW, 18, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CTB - Cyber Tool Box', 10, 12);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Download Activity Report', 10, 16.5);
+
+  // Filename + date (top right)
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  const fnTrunc = filename.length > 40 ? filename.slice(0, 37) + '...' : filename;
+  doc.text(fnTrunc, pageW - 10, 10, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('Generated: ' + now, pageW - 10, 15, { align: 'right' });
+
+  // Info boxes
+  doc.setTextColor(15, 23, 42);
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(10, 24, 88, 16, 2, 2, 'F');
+  doc.roundedRect(102, 24, 88, 16, 2, 2, 'F');
+  doc.setFontSize(7);
+  doc.setTextColor(148, 163, 184);
+  doc.text('FILE NAME', 14, 30);
+  doc.text('TOTAL DOWNLOADS', 106, 30);
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'bold');
+  doc.text(fnTrunc, 14, 37);
+  doc.setTextColor(29, 78, 216);
+  doc.text(logs.length + ' times', 106, 37);
+
+  // Table
+  doc.setFont('helvetica', 'normal');
+  const tableRows = logs.length ? logs.map((l, i) => {
+    const ua  = parseUA_text(l.user_agent);
+    const loc = [l.city, l.country].filter(Boolean).join(', ') || '-';
+    const time = new Date(l.downloaded_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return [i + 1, l.ip || '-', loc, l.isp || '-', ua, time];
+  }) : [['', '', 'No download history', '', '', '']];
+
+  doc.autoTable({
+    startY: 46,
+    head: [['#', 'IP Address', 'Country / City', 'ISP / Network', 'Device', 'Downloaded At']],
+    body: tableRows,
+    theme: 'grid',
+    headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 8, textColor: [15, 23, 42] },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    columnStyles: {
+      0: { cellWidth: 8 },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 32 },
+      3: { cellWidth: 35 },
+      4: { cellWidth: 30 },
+      5: { cellWidth: 30 },
+    },
+    margin: { left: 10, right: 10 },
+  });
+
+  // Footer
+  const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 6 : 200;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(10, finalY, pageW - 10, finalY);
+  doc.setFontSize(7);
+  doc.setTextColor(148, 163, 184);
+  doc.text('CTB - Cyber Tool Box  |  Auto-generated report  |  ' + now, pageW / 2, finalY + 5, { align: 'center' });
+
+  const safeName = filename.replace(/[^a-z0-9_\-\.]/gi, '_');
+  doc.save(`CTB_DownloadReport_${safeName}.pdf`);
+  notify('ดาวน์โหลด PDF เรียบร้อย');
+}

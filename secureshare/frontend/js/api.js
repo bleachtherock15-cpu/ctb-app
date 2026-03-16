@@ -79,11 +79,12 @@ const Shares = {
     return apiFetch('/shares');
   },
 
-  async upload(file, { ttl, maxDownloads } = {}, onProgress) {
+  async upload(file, { ttl, maxDownloads, password } = {}, onProgress) {
     const form = new FormData();
     form.append('file', file);
     if (ttl) form.append('ttl', ttl);
     if (maxDownloads) form.append('maxDownloads', maxDownloads);
+    if (password) form.append('password', password);
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -124,6 +125,30 @@ const Shares = {
 
   async getInfo(token) {
     return apiFetch(`/shares/info/${token}`);
+  },
+
+  async getLogs(shareId) {
+    return apiFetch(`/shares/${shareId}/logs`);
+  },
+
+  async downloadWithPassword(token, password) {
+    const res = await fetch(`${API_BASE}/shares/dl/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP_${res.status}`);
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get('Content-Disposition') || '';
+    const match = cd.match(/filename="?([^"]+)"?/);
+    const filename = match ? decodeURIComponent(match[1]) : 'download';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
   },
 };
 
