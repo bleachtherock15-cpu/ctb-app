@@ -547,7 +547,7 @@ async function toggleLogs(shareId, btn) {
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
               <span style="font-family:\'JetBrains Mono\',monospace;font-weight:600;color:var(--cyan)">${l.ip}</span>
-              ${l.country ? `<span style="background:rgba(2,132,199,.08);border:1px solid rgba(2,132,199,.15);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--tx-2)">${flag} ${l.city ? l.city+', ' : ''}${l.country}</span>` : ''}
+              ${l.country ? `<span style="background:rgba(2,132,199,.08);border:1px solid rgba(2,132,199,.15);border-radius:4px;padding:1px 6px;font-size:10px;color:var(--tx-2)">${flag} ${l.country}</span>` : ''}
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <span style="color:var(--tx-2)">${ua}</span>
@@ -642,14 +642,14 @@ async function exportLogsPDF(shareId, filename) {
   doc.setFont('helvetica', 'normal');
   const tableRows = logs.length ? logs.map((l, i) => {
     const ua  = parseUA_text(l.user_agent);
-    const loc = [l.city, l.country].filter(Boolean).join(', ') || '-';
+    const loc = l.country || '-';
     const time = new Date(l.downloaded_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     return [i + 1, l.ip || '-', loc, l.isp || '-', ua, time];
   }) : [['', '', 'No download history', '', '', '']];
 
   doc.autoTable({
     startY: 46,
-    head: [['#', 'IP Address', 'Country / City', 'ISP / Network', 'Device', 'Downloaded At']],
+    head: [['#', 'IP Address', 'Country', 'ISP / Network', 'Device', 'Downloaded At']],
     body: tableRows,
     theme: 'grid',
     headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
