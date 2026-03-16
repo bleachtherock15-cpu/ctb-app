@@ -553,7 +553,6 @@ async function toggleLogs(shareId, btn) {
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <span style="color:var(--tx-2)">${ua}</span>
-              ${l.isp ? `<span style="color:var(--tx-3)">· ${l.isp}</span>` : ''}
               <span style="color:var(--tx-3);margin-left:auto;flex-shrink:0">${time}</span>
             </div>
           </div>
@@ -682,12 +681,12 @@ async function exportLogsPDF(shareId, filename) {
     const ua  = parseUA_text(l.user_agent);
     const loc = l.country || '-';
     const time = new Date(l.downloaded_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    return [i + 1, l.ip || '-', loc, l.isp || '-', ua, time];
-  }) : [['', '', 'No download history', '', '', '']];
+    return [i + 1, l.ip || '-', loc, ua, time];
+  }) : [['', '', 'No download history', '', '']];
 
   doc.autoTable({
     startY: 46,
-    head: [['#', 'IP Address', 'Country', 'ISP / Network', 'Device', 'Downloaded At']],
+    head: [['#', 'IP Address', 'Country', 'Device', 'Downloaded At']],
     body: tableRows,
     theme: 'grid',
     headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
@@ -695,11 +694,10 @@ async function exportLogsPDF(shareId, filename) {
     alternateRowStyles: { fillColor: [248, 250, 252] },
     columnStyles: {
       0: { cellWidth: 8 },
-      1: { cellWidth: 28 },
-      2: { cellWidth: 32 },
-      3: { cellWidth: 35 },
-      4: { cellWidth: 30 },
-      5: { cellWidth: 30 },
+      1: { cellWidth: 38 },
+      2: { cellWidth: 40 },
+      3: { cellWidth: 40 },
+      4: { cellWidth: 37 },
     },
     margin: { left: 10, right: 10 },
   });
