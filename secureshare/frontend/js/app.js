@@ -95,6 +95,10 @@ function goPage(p) {
   closeNav();
   document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
   document.getElementById('p-' + p).classList.add('on');
+  // Lazy-load heavy libs on first visit to their page
+  if (p === 'pass' && !window.zxcvbn)
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js');
+
 
   ALL_PAGES.forEach(id => {
     const ni = document.getElementById('ni-' + id);
@@ -493,6 +497,19 @@ function analyzeMeta(f) {
   r.readAsArrayBuffer(f.slice(0, 16));
 }
 
+/* ── Lazy script loader ──────────────────────── */
+const _loadedScripts = new Set();
+function loadScript(src) {
+  if (_loadedScripts.has(src)) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.defer = true;
+    s.onload = () => { _loadedScripts.add(src); resolve(); };
+    s.onerror = () => reject(new Error('Failed to load: ' + src));
+    document.head.appendChild(s);
+  });
+}
+
 /* ── Utilities ───────────────────────────────── */
 function fmtSz(b)  { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
 function fmtSzD(b) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(2) + ' KB'; if (b < 1073741824) return (b / 1048576).toFixed(2) + ' MB'; return (b / 1073741824).toFixed(2) + ' GB'; }
@@ -635,7 +652,9 @@ function parseUA_text(ua) {
 
 /* ── Export Logs PDF ─────────────────────────── */
 /* ── QR Code ─────────────────────────────────── */
-function showQr(token, filename) {
+async function showQr(token, filename) {
+  if (!window.QRCode)
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js');
   const url = Shares.getShareLink(token);
   document.getElementById('qr-filename').textContent = filename;
   const container = document.getElementById('qr-canvas');
@@ -672,6 +691,10 @@ document.getElementById('qr-modal')?.addEventListener('click', e => {
 
 async function exportLogsPDF(shareId, filename) {
   notify('กำลังสร้าง PDF...');
+  if (!window.jspdf) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+  }
   let logs = [];
   try {
     const res = await Shares.getLogs(shareId);

@@ -6,6 +6,12 @@
 <title>CTB — Cyber Tool Box</title>
 <link rel="icon" type="image/png" href="img/kku-logo.png"/>
 <link rel="apple-touch-icon" href="img/kku-logo.png"/>
+<!-- Preconnect to external origins -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com"/>
+<!-- Google Fonts — non-blocking link instead of @import -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@700;800;900&display=swap"/>
 <link rel="stylesheet" href="css/main.css"/>
 </head>
 <body>
@@ -704,14 +710,13 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="js/api.js"></script>
-<script src="js/hash.js"></script>
-<script src="js/app.js"></script>
-<script src="js/geo.js"></script>
+<!-- CryptoJS: needed for AES cipher, defer so it doesn't block parse -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" defer></script>
+<!-- App scripts — deferred, execute after HTML parsed -->
+<script src="js/api.js" defer></script>
+<script src="js/hash.js" defer></script>
+<script src="js/app.js" defer></script>
+<script src="js/geo.js" defer></script>
+<!-- zxcvbn, QRCode, jsPDF loaded lazily on demand -->
 </body>
 </html>
