@@ -286,8 +286,8 @@ async function runHash() {
     sha512: { color: '#6366f1',       label: 'SHA-512' },
   };
   res.innerHTML = `<div class="card"><div class="cb">` +
-    Object.entries(hashes).map(([k, v]) => `
-      <div style="padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
+    Object.entries(hashes).map(([k, v], i) => `
+      <div class="hash-row" style="--i:${i};padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span class="badge" style="color:${meta[k].color};border-color:${meta[k].color}33;background:${meta[k].color}11">${meta[k].label}</span>
           <button onclick="cpText('${v}',this)" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--tx-1)';this.style.background='var(--bg-4)'" onmouseout="this.style.color='var(--tx-3)';this.style.background='none'">Copy</button>
@@ -301,6 +301,8 @@ async function runHash() {
 function cpText(text, btn) {
   navigator.clipboard.writeText(text).then(() => {
     const orig = btn.textContent; btn.textContent = '✓ Copied'; btn.style.color = 'var(--green)';
+    const row = btn.closest('.hash-row');
+    if (row) { row.classList.remove('copy-flash'); void row.offsetWidth; row.classList.add('copy-flash'); }
     setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1800);
     notify('Copied to clipboard!');
   });
