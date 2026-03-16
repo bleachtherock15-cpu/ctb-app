@@ -24,15 +24,14 @@ router.post('/register', async (req, res) => {
     if (!emailRegex.test(email))
       return res.status(400).json({ error: 'INVALID_EMAIL_FORMAT' });
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
+    const existing = (await db.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()])).rows[0];
     if (existing)
       return res.status(409).json({ error: 'EMAIL_ALREADY_REGISTERED' });
 
     const hash = await bcrypt.hash(password, 12);
     const id   = uuidv4();
 
-    db.prepare('INSERT INTO users (id, email, password) VALUES (?, ?, ?)')
-      .run(id, email.toLowerCase(), hash);
+    await db.query('INSERT INTO users (id, email, password) VALUES ($1, $2, $3)', [id, email.toLowerCase(), hash]);
 
     const token = jwt.sign({ id, email: email.toLowerCase() }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
     res.status(201).json({ token, user: { id, email: email.toLowerCase() } });
@@ -50,7 +49,7 @@ router.post('/login', async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ error: 'EMAIL_AND_PASSWORD_REQUIRED' });
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+    const user = (await db.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()])).rows[0];
     if (!user)
       return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
@@ -67,10 +66,14 @@ router.post('/login', async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', require('../middleware/auth'), (req, res) => {
-  const user = db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(req.user.id);
-  if (!user) return res.status(404).json({ error: 'USER_NOT_FOUND' });
-  res.json({ user });
+router.get('/me', require('../middleware/auth'), async (req, res) => {
+  try {
+    const user = (await db.query('SELECT id, email, created_at FROM users WHERE id = $1', [req.user.id])).rows[0];
+    if (!user) return res.status(404).json({ error: 'USER_NOT_FOUND' });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
 });
 
 module.exports = router;
