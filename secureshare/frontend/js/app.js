@@ -398,11 +398,11 @@ function runPw(pw) {
   else if (hasRepeat || lowVariety)     effectiveScore = Math.min(effectiveScore, 2);
 
   const scoreMap = [
-    { c: 'var(--red)',    w: '8%',   l: 'CRITICAL'  },
-    { c: '#e06c75',       w: '22%',  l: 'WEAK'      },
-    { c: 'var(--amber)',  w: '48%',  l: 'MODERATE'  },
-    { c: 'var(--blue)',   w: '74%',  l: 'STRONG'    },
-    { c: 'var(--green)', w: '100%', l: 'HARDENED'  },
+    { c: 'var(--red)',    w: '8%',   l: 'อันตราย'      },
+    { c: '#e06c75',       w: '22%',  l: 'อ่อนแอ'       },
+    { c: 'var(--amber)',  w: '48%',  l: 'พอใช้ได้'     },
+    { c: 'var(--blue)',   w: '74%',  l: 'แข็งแกร่ง'    },
+    { c: 'var(--green)', w: '100%', l: 'ปลอดภัยสูง'   },
   ];
   const cfg = scoreMap[effectiveScore];
 
