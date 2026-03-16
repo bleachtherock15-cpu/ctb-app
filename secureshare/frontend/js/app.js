@@ -14,9 +14,9 @@ function setMode(m) {
   document.getElementById('mb-si').className = 'mb-btn' + (m === 'si' ? ' on' : '');
   document.getElementById('mb-su').className = 'mb-btn' + (m === 'su' ? ' on' : '');
   const isLogin = m === 'si';
-  document.getElementById('auth-title').textContent = isLogin ? 'SYSTEM ACCESS' : 'NEW OPERATIVE';
-  document.getElementById('auth-desc').textContent  = isLogin ? 'authenticate to proceed' : 'register new credentials';
-  document.getElementById('a-btn').textContent      = isLogin ? 'Log in' : 'Register';
+  document.getElementById('auth-title').textContent = isLogin ? 'เข้าสู่ระบบ' : 'สมัครใช้งาน';
+  document.getElementById('auth-desc').textContent  = isLogin ? 'กรอกอีเมลและรหัสผ่านของคุณเพื่อเข้าใช้งาน' : 'กรอกข้อมูลเพื่อสร้างบัญชีใหม่';
+  document.getElementById('a-btn').textContent      = isLogin ? 'Log in' : 'สมัครสมาชิก';
   document.getElementById('a-msg').innerHTML = '';
 }
 
@@ -26,11 +26,11 @@ async function doAuth() {
   const msg   = document.getElementById('a-msg');
   const btn   = document.getElementById('a-btn');
 
-  if (!email || !pass) { msg.innerHTML = '<div class="emsg">Email and password are required.</div>'; return; }
-  if (pass.length < 6) { msg.innerHTML = '<div class="emsg">Password must be at least 6 characters.</div>'; return; }
+  if (!email || !pass) { msg.innerHTML = '<div class="emsg">กรุณากรอกอีเมลและรหัสผ่าน</div>'; return; }
+  if (pass.length < 6) { msg.innerHTML = '<div class="emsg">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</div>'; return; }
 
   btn.disabled = true;
-  btn.textContent = 'Connecting...';
+  btn.textContent = authMode === 'si' ? 'กำลังเข้าสู่ระบบ...' : 'กำลังสมัครสมาชิก...';
 
   try {
     if (authMode === 'si') await Auth.login(email, pass);
@@ -38,14 +38,14 @@ async function doAuth() {
     startApp();
   } catch (err) {
     const map = {
-      INVALID_CREDENTIALS:     'Invalid email or password.',
-      EMAIL_ALREADY_REGISTERED:'Email already registered.',
-      INVALID_EMAIL_FORMAT:    'Invalid email format.',
+      INVALID_CREDENTIALS:     'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+      EMAIL_ALREADY_REGISTERED:'อีเมลนี้ถูกใช้งานแล้ว',
+      INVALID_EMAIL_FORMAT:    'รูปแบบอีเมลไม่ถูกต้อง',
     };
     msg.innerHTML = `<div class="emsg">${map[err.message] || err.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = authMode === 'si' ? 'Log in' : 'Register';
+    btn.textContent = authMode === 'si' ? 'Log in' : 'สมัครสมาชิก';
   }
 }
 
