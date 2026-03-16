@@ -110,7 +110,7 @@
         </div>
         <div>
           <div class="ni-label">Crypto Toolkit</div>
-          <div class="ni-sub">Hash · AES · DES · Encode</div>
+          <div class="ni-sub">Hash · AES · RSA</div>
         </div>
       </div>
 
@@ -272,10 +272,6 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
           CIPHER
         </button>
-        <button class="ttab" id="ht-encode" onclick="setHashTab('encode')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          ENCODE
-        </button>
       </div>
 
       <!-- ── TAB: HASH ── -->
@@ -429,42 +425,6 @@
         <div class="rp" id="enc-res"></div>
       </div>
 
-      <!-- ── TAB: ENCODE ── -->
-      <div id="hp-encode" class="tp">
-        <div class="card kit-panel">
-          <div class="kit-panel-header">
-            <div class="kit-panel-title">
-              <span class="kit-badge" style="background:rgba(22,163,74,.1);color:var(--green);border-color:rgba(22,163,74,.25)">ENCODE</span>
-              แปลงรูปแบบ
-            </div>
-          </div>
-          <div class="cb">
-            <div class="mb12">
-              <label class="lbl">วิธีแปลง</label>
-              <div style="display:flex;flex-wrap:wrap;gap:5px">
-                <button class="kms-btn kms-on enc-method-btn" data-m="base64" onclick="setEncodeMethod('base64')">Base64</button>
-                <button class="kms-btn enc-method-btn" data-m="hex" onclick="setEncodeMethod('hex')">Hex</button>
-                <button class="kms-btn enc-method-btn" data-m="url" onclick="setEncodeMethod('url')">URL</button>
-              </div>
-            </div>
-            <div class="mb12">
-              <label class="lbl">Input</label>
-              <textarea class="inp" rows="5" id="cod-input" placeholder="กรอกข้อความที่ต้องการแปลง..." style="font-family:'JetBrains Mono',monospace;font-size:12px;resize:none"></textarea>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-primary" style="flex:1;padding:12px" onclick="runEncode()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                Encode / แปลง
-              </button>
-              <button class="btn btn-outline" style="flex:1;padding:12px" onclick="runDecode()">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8 6 2 12 8 18"/><polyline points="16 18 22 12 16 6"/></svg>
-                Decode / แปลงกลับ
-              </button>
-            </div>
-          </div>
-        </div>
-        <div class="rp" id="cod-res"></div>
-      </div>
     </div>
 
     <!-- ═══ PAGE: URL SCAN ═══ -->
