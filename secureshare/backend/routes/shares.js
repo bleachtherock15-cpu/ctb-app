@@ -61,22 +61,31 @@ async function logDownload(shareId, req) {
 router.post('/', auth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'NO_FILE_PROVIDED' });
 
-  const { ttl, maxDownloads, password } = req.body;
-  const token = uuidv4();
-  const id    = uuidv4();
+  try {
+    const { ttl, maxDownloads, password } = req.body;
+    const token = uuidv4();
+    const id    = uuidv4();
 
-  const expiresAt    = ttl ? new Date(Date.now() + parseInt(ttl) * 3600 * 1000).toISOString() : null;
-  const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+    const expiresAt    = ttl ? new Date(Date.now() + parseInt(ttl) * 3600 * 1000).toISOString() : null;
+    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
 
-  db.prepare(`
-    INSERT INTO shares (id, user_id, filename, original_name, file_size, file_type, token, expires_at, max_downloads, password_hash)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.user.id, req.file.filename, req.file.originalname,
-    req.file.size, req.file.mimetype, token, expiresAt,
-    maxDownloads ? parseInt(maxDownloads) : null, passwordHash);
+    db.prepare(`
+      INSERT INTO shares (id, user_id, filename, original_name, file_size, file_type, token, expires_at, max_downloads, password_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, req.user.id, req.file.filename, req.file.originalname,
+      req.file.size, req.file.mimetype, token, expiresAt,
+      maxDownloads ? parseInt(maxDownloads) : null, passwordHash);
 
-  const share = db.prepare('SELECT * FROM shares WHERE id = ?').get(id);
-  res.status(201).json({ share: sanitize(share) });
+    const share = db.prepare('SELECT * FROM shares WHERE id = ?').get(id);
+    res.status(201).json({ share: sanitize(share) });
+  } catch (err) {
+    console.error('[UPLOAD ERROR]', err.message);
+    if (req.file) fs.unlink(req.file.path, () => {});
+    if (err.message && err.message.includes('FOREIGN KEY')) {
+      return res.status(401).json({ error: 'SESSION_EXPIRED_PLEASE_RELOGIN' });
+    }
+    res.status(500).json({ error: 'UPLOAD_FAILED' });
+  }
 });
 
 // ── GET /api/shares  (list) ────────────────────────────────
