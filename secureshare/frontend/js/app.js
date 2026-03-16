@@ -7,7 +7,6 @@ let authMode = 'si';
 
 window.addEventListener('DOMContentLoaded', async () => {
   if (Auth.isLoggedIn()) startApp();
-  setInterval(() => {}, 1000);
 });
 
 function setMode(m) {
@@ -17,7 +16,7 @@ function setMode(m) {
   const isLogin = m === 'si';
   document.getElementById('auth-title').textContent = isLogin ? 'SYSTEM ACCESS' : 'NEW OPERATIVE';
   document.getElementById('auth-desc').textContent  = isLogin ? 'authenticate to proceed' : 'register new credentials';
-  document.getElementById('a-btn').textContent      = isLogin ? 'AUTHENTICATE' : 'REGISTER';
+  document.getElementById('a-btn').textContent      = isLogin ? 'Log in' : 'Register';
   document.getElementById('a-msg').innerHTML = '';
 }
 
@@ -46,7 +45,7 @@ async function doAuth() {
     msg.innerHTML = `<div class="emsg">${map[err.message] || err.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = authMode === 'si' ? 'Sign In' : 'Create Account';
+    btn.textContent = authMode === 'si' ? 'Log in' : 'Register';
   }
 }
 
@@ -68,11 +67,11 @@ function signOut() { Auth.logout(); }
 
 /* ── Navigation ──────────────────────────────── */
 const PAGE_CFG = {
-  dash: { cls: 'a-c', accent: 'var(--teal)' },
-  hash: { cls: 'a-p', accent: 'var(--pink)' },
+  dash: { cls: 'a-c', accent: 'var(--brand)' },
+  hash: { cls: 'a-p', accent: 'var(--purple)' },
   url:  { cls: 'a-g', accent: 'var(--green)' },
   pass: { cls: 'a-t', accent: 'var(--amber)' },
-  geo:  { cls: 'a-t', accent: 'var(--teal)' },
+  geo:  { cls: 'a-t', accent: 'var(--indigo)' },
 };
 
 const ALL_PAGES = ['dash', 'hash', 'url', 'pass', 'geo'];
@@ -278,7 +277,7 @@ async function runHash() {
   const meta = {
     md5:    { color: 'var(--amber)',  label: 'MD5' },
     sha1:   { color: 'var(--red)',    label: 'SHA-1' },
-    sha256: { color: 'var(--blue)',   label: 'SHA-256' },
+    sha256: { color: 'var(--brand)',  label: 'SHA-256' },
     sha384: { color: 'var(--purple)', label: 'SHA-384' },
     sha512: { color: '#6366f1',       label: 'SHA-512' },
   };
@@ -685,7 +684,7 @@ async function exportLogsPDF(shareId, filename) {
   const pageW = doc.internal.pageSize.getWidth();
 
   // Header bar
-  doc.setFillColor(2, 132, 199);
+  doc.setFillColor(167, 59, 36);
   doc.rect(0, 0, pageW, 18, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);

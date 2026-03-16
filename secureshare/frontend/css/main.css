@@ -9,14 +9,17 @@
 :root{
   --bg:#f2efeb; --bg-1:#e9e5e0; --bg-2:#dedad4; --bg-3:#ccc7bf; --bg-4:#a9a49c;
   --border:rgba(28,25,23,.09); --border-2:rgba(28,25,23,.16);
-  --tx-1:#1a1714; --tx-2:#3d3933; --tx-3:#78716c;
-  --cyan:#a73b24; --cyan-2:#8b3020; --cyan-dim:rgba(167,59,36,.08);
-  --purple:#7c3aed; --purple-2:#6d28d9; --purple-dim:rgba(124,58,237,.07);
+  --tx-1:#1a1714; --tx-2:#3d3933; --tx-3:#6b6460;
+  --brand:#a73b24; --brand-2:#8b3020; --brand-dim:rgba(167,59,36,.08);
+  --purple:#7c3aed; --purple-2:#6d28d9; --purple-light:#a78bfa; --purple-dim:rgba(124,58,237,.07);
   --green:#16a34a; --green-2:#15803d;
-  --amber:#d97706; --red:#c0392b;
-  /* compat aliases */
-  --teal:#a73b24; --teal-2:#8b3020; --blue:#a73b24; --blue-2:#8b3020;
-  --pink:#7c3aed; --pink-2:#6d28d9; --purple-light:#a78bfa;
+  --amber:#b45309; --red:#c0392b;
+  --indigo:var(--indigo);
+  /* legacy aliases — prefer --brand in new code */
+  --cyan:var(--brand); --cyan-2:var(--brand-2); --cyan-dim:var(--brand-dim);
+  --teal:var(--brand); --teal-2:var(--brand-2);
+  --blue:var(--brand); --blue-2:var(--brand-2);
+  --pink:var(--purple); --pink-2:var(--purple-2);
   /* shadows — stronger for white cards on warm stone bg */
   --shadow-sm:0 1px 3px rgba(28,25,23,.09),0 1px 2px rgba(28,25,23,.06);
   --shadow:0 4px 18px rgba(28,25,23,.11),0 2px 6px rgba(28,25,23,.06);
@@ -291,11 +294,6 @@ input[type=file]{display:none}
   text-shadow:0 0 60px rgba(167,59,36,.4)}
 .auth-brand-sub{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(255,255,255,.5);
   letter-spacing:.16em;text-transform:uppercase;margin-bottom:52px;font-weight:600}
-.auth-brand-features{display:flex;flex-direction:column;gap:14px}
-.auth-feat{display:flex;align-items:center;gap:14px;font-family:'DM Sans',sans-serif;
-  font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
-.auth-feat-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:var(--cyan);
-  box-shadow:0 0 6px rgba(167,59,36,.8);animation:pls 2.5s ease-in-out infinite}
 .auth-brand-deco{position:absolute;bottom:-80px;right:-80px;width:320px;height:320px;
   border-radius:50%;pointer-events:none;
   background:radial-gradient(circle,rgba(167,59,36,.1) 0%,transparent 70%)}
@@ -326,7 +324,7 @@ input[type=file]{display:none}
 .badge{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid;letter-spacing:.02em}
 .bdg-blue,.bdg-teal{color:var(--cyan);border-color:rgba(167,59,36,.25);background:rgba(167,59,36,.08)}
 .bdg-green{color:var(--green);border-color:rgba(22,163,74,.3);background:rgba(22,163,74,.08)}
-.bdg-amber{color:var(--amber);border-color:rgba(217,119,6,.3);background:rgba(217,119,6,.08)}
+.bdg-amber{color:var(--amber);border-color:rgba(180,83,9,.3);background:rgba(180,83,9,.08)}
 .bdg-red{color:var(--red);border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.08)}
 .bdg-purple{color:var(--purple);border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.08)}
 
@@ -336,7 +334,7 @@ input[type=file]{display:none}
 .smsg{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--green);padding:10px 14px;
   border:1px solid rgba(22,163,74,.2);background:rgba(22,163,74,.05);border-radius:var(--rs);margin-top:8px}
 .wmsg{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--amber);padding:10px 14px;
-  border:1px solid rgba(217,119,6,.2);background:rgba(217,119,6,.05);border-radius:var(--rs);margin-top:8px}
+  border:1px solid rgba(180,83,9,.2);background:rgba(180,83,9,.05);border-radius:var(--rs);margin-top:8px}
 
 /* ── Terminal ─────────────────────────────────────── */
 .term{background:#18181b;border:1px solid rgba(255,255,255,.06);border-radius:var(--rs);
@@ -560,7 +558,7 @@ input[type=file]{display:none}
 .auth-brand-inner{animation:fadeUp .5s var(--ease-out-expo) .04s both}
 
 /* Geo alt-fill transition */
-.geo-alt-fill{transition:width .7s var(--ease-out-expo) !important}
+.geo-result.show .geo-alt-fill{transition:width .7s var(--ease-out-expo)}
 
 /* Nav icon transition — smooth color when active */
 .ni-icon{transition:background .2s var(--ease-out-quart),border-color .2s var(--ease-out-quart)}
@@ -571,7 +569,7 @@ input[type=file]{display:none}
 /* ── Reduced motion ──────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
-  .geo-pin-bounce,.geo-spinner,.pulse,.online-dot,.auth-feat-dot{animation:none !important}
+  .geo-pin-bounce,.geo-spinner,.pulse,.online-dot{animation:none !important}
   @keyframes fadeUp{from{opacity:1;transform:none}to{opacity:1;transform:none}}
 }
 
@@ -587,10 +585,10 @@ input[type=file]{display:none}
 #ni-hash .ni-icon svg{stroke:var(--purple)}
 #ni-url .ni-icon{background:rgba(22,163,74,.08);border-color:rgba(22,163,74,.18)}
 #ni-url .ni-icon svg{stroke:var(--green)}
-#ni-pass .ni-icon{background:rgba(217,119,6,.08);border-color:rgba(217,119,6,.18)}
+#ni-pass .ni-icon{background:rgba(180,83,9,.08);border-color:rgba(180,83,9,.18)}
 #ni-pass .ni-icon svg{stroke:var(--amber)}
 #ni-geo .ni-icon{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.18)}
-#ni-geo .ni-icon svg{stroke:#6366f1}
+#ni-geo .ni-icon svg{stroke:var(--indigo)}
 
 /* Page eyebrow color per section */
 #p-hash .ch-eyebrow{color:var(--purple)}
@@ -599,12 +597,12 @@ input[type=file]{display:none}
 #p-url  .ch-eyebrow::before{background:var(--green)}
 #p-pass .ch-eyebrow{color:var(--amber)}
 #p-pass .ch-eyebrow::before{background:var(--amber)}
-#p-geo  .ch-eyebrow{color:#6366f1}
-#p-geo  .ch-eyebrow::before{background:#6366f1}
+#p-geo  .ch-eyebrow{color:var(--indigo)}
+#p-geo  .ch-eyebrow::before{background:var(--indigo)}
 
 /* GeoSight feature cards — colored left border per clue type */
 #p-geo .g4 .card:nth-child(1){border-left:3px solid var(--amber)}
-#p-geo .g4 .card:nth-child(2){border-left:3px solid #6366f1}
+#p-geo .g4 .card:nth-child(2){border-left:3px solid var(--indigo)}
 #p-geo .g4 .card:nth-child(3){border-left:3px solid var(--green)}
 #p-geo .g4 .card:nth-child(4){border-left:3px solid var(--cyan)}
 
@@ -612,9 +610,9 @@ input[type=file]{display:none}
 .auth-form-panel [style*="CTB // CYBER"]{color:var(--cyan) !important}
 
 /* Geo confidence ring uses indigo on GeoSight */
-#geo-conf-arc{stroke:#6366f1}
-.geo-ring-pct{color:#6366f1}
-.geo-region{color:#6366f1}
+#geo-conf-arc{stroke:var(--indigo)}
+.geo-ring-pct{color:var(--indigo)}
+.geo-region{color:var(--indigo)}
 .geo-conf-card{background:rgba(99,102,241,.05);border-color:rgba(99,102,241,.14)}
 
 /* URL scan result accent — green */
