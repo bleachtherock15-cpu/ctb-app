@@ -355,39 +355,82 @@ let pwVis = false;
 function togglePw() { pwVis = !pwVis; document.getElementById('pw-inp').type = pwVis ? 'text' : 'password'; document.getElementById('pw-show').textContent = pwVis ? 'HIDE' : 'SHOW'; }
 function runPw(pw) {
   if (!pw) { document.getElementById('pw-bar-wrap').style.display = 'none'; document.getElementById('pw-res').classList.remove('on'); return; }
+
+  // Pattern detection
+  const allSame      = /^(.)\1+$/.test(pw);
+  const hasRepeat    = /(.)\1{2,}/.test(pw) || /(.{2,})\1{2,}/.test(pw);
+  const hasKeyboard  = /qwerty|asdfgh|zxcvbn|qwer|asdf|zxcv|hjkl|yuiop|12345|23456|34567|45678|56789|67890|09876|98765/i.test(pw);
+  const hasSeq       = /abcde|bcdef|cdefg|defgh|efghi|fghij|ghijk|hijkl|ijklm|jklmn|klmno|lmnop|mnopq|nopqr|opqrs|pqrst|qrstu|rstuv|stuvw|tuvwx|uvwxy|vwxyz|zyxwv|98765|87654|76543|65432|54321/i.test(pw);
+  const uniqueRatio  = new Set(pw.split('')).size / pw.length;
+  const lowVariety   = uniqueRatio < 0.4 && pw.length > 4;
+  const leet         = pw.replace(/4/g,'a').replace(/3/g,'e').replace(/1/g,'i').replace(/0/g,'o').replace(/5/g,'s').replace(/@/g,'a').replace(/\$/g,'s');
+  const commonLeet   = ['password','123456','qwerty','abc123','letmein','monkey','dragon','master','admin','login'].includes(leet.toLowerCase());
+
+  // zxcvbn base analysis
+  const z = window.zxcvbn ? zxcvbn(pw) : null;
+
   const checks = [
-    { l: 'At least 8 characters', p: pw.length >= 8 }, { l: 'At least 12 characters', p: pw.length >= 12 },
-    { l: 'Lowercase letters', p: /[a-z]/.test(pw) }, { l: 'Uppercase letters', p: /[A-Z]/.test(pw) },
-    { l: 'Numbers', p: /[0-9]/.test(pw) }, { l: 'Special characters', p: /[^a-zA-Z0-9]/.test(pw) },
-    { l: 'No common passwords', p: !['password', '123456', 'qwerty', 'abc123'].includes(pw.toLowerCase()) },
-    { l: 'No repeated characters', p: !/(.)\1{2,}/.test(pw) },
+    { l: 'At least 8 characters',     p: pw.length >= 8 },
+    { l: 'At least 12 characters',    p: pw.length >= 12 },
+    { l: 'Lowercase letters',         p: /[a-z]/.test(pw) },
+    { l: 'Uppercase letters',         p: /[A-Z]/.test(pw) },
+    { l: 'Numbers',                   p: /[0-9]/.test(pw) },
+    { l: 'Special characters',        p: /[^a-zA-Z0-9]/.test(pw) },
+    { l: 'No repeated characters',    p: !hasRepeat },
+    { l: 'No keyboard patterns',      p: !hasKeyboard },
+    { l: 'No sequential characters',  p: !hasSeq },
+    { l: 'Character variety (40%+)',  p: !lowVariety },
+    { l: 'Not a common password',     p: !commonLeet && (!z || z.score >= 2) },
+    { l: 'Not all same character',    p: !allSame },
   ];
-  const pool = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].reduce((a, r, i) => a + (r.test(pw) ? [26, 26, 10, 32][i] : 0), 0);
-  const ent  = pw.length * Math.log2(pool || 1);
-  const str  = ent < 25 ? 'Very Weak' : ent < 40 ? 'Weak' : ent < 55 ? 'Fair' : ent < 75 ? 'Strong' : 'Very Strong';
-  const sMap = {
-    'Very Weak':  { c: 'var(--red)',    w: '8%',   l: 'CRITICAL' },
-    'Weak':       { c: '#e06c75',       w: '22%',  l: 'WEAK' },
-    'Fair':       { c: 'var(--amber)',  w: '48%',  l: 'MODERATE' },
-    'Strong':     { c: 'var(--blue)',   w: '74%',  l: 'STRONG' },
-    'Very Strong':{ c: 'var(--green)', w: '100%', l: 'HARDENED' },
-  };
-  const cfg  = sMap[str];
-  const gpuR = 1e10; const secs = Math.pow(2, ent) / gpuR;
-  const ct = secs < 1 ? 'Instant' : secs < 60 ? Math.round(secs) + 's' : secs < 3600 ? Math.round(secs / 60) + ' min' : secs < 86400 ? Math.round(secs / 3600) + ' hrs' : secs < 2592000 ? Math.round(secs / 86400) + ' days' : secs < 31536000 ? Math.round(secs / 2592000) + ' months' : secs < 3.15e9 ? Math.round(secs / 31536000) + ' years' : 'Centuries+';
+
+  // Determine effective score (0-4) with pattern penalties
+  let effectiveScore = z ? z.score : Math.min(4, Math.floor(pw.length / 4));
+  if (allSame)                          effectiveScore = 0;
+  else if (commonLeet)                  effectiveScore = Math.min(effectiveScore, 0);
+  else if (hasKeyboard || hasSeq)       effectiveScore = Math.min(effectiveScore, 1);
+  else if (hasRepeat || lowVariety)     effectiveScore = Math.min(effectiveScore, 2);
+
+  const scoreMap = [
+    { c: 'var(--red)',    w: '8%',   l: 'CRITICAL'  },
+    { c: '#e06c75',       w: '22%',  l: 'WEAK'      },
+    { c: 'var(--amber)',  w: '48%',  l: 'MODERATE'  },
+    { c: 'var(--blue)',   w: '74%',  l: 'STRONG'    },
+    { c: 'var(--green)', w: '100%', l: 'HARDENED'  },
+  ];
+  const cfg = scoreMap[effectiveScore];
+
+  // Crack time from zxcvbn (more accurate) or fallback
+  const ct = z
+    ? z.crack_times_display.offline_fast_hashing_1e10_per_second
+    : (() => { const pool = [/[a-z]/,/[A-Z]/,/[0-9]/,/[^a-zA-Z0-9]/].reduce((a,r,i)=>a+(r.test(pw)?[26,26,10,32][i]:0),0); const secs=Math.pow(2,pw.length*Math.log2(pool||1))/1e10; return secs<1?'Instant':secs<60?Math.round(secs)+'s':secs<3600?Math.round(secs/60)+' min':'Centuries+'; })();
+
+  // Entropy bits
+  const ent = z ? (z.guesses_log10 * Math.log2(10)).toFixed(1) : (pw.length * Math.log2(26)).toFixed(1);
+
   const score = Math.round(checks.filter(c => c.p).length / checks.length * 100);
+
+  // Suggestions
   const sug = [];
-  if (pw.length < 8) sug.push('Use at least 8 characters');
+  if (allSame)       sug.push('Avoid using the same character repeatedly (e.g. "aaaaaaa")');
+  if (commonLeet)    sug.push('This is a common password even with substitutions');
+  if (hasKeyboard)   sug.push('Avoid keyboard patterns (qwerty, asdfgh, etc.)');
+  if (hasSeq)        sug.push('Avoid sequential characters (abcde, 12345, etc.)');
+  if (hasRepeat)     sug.push('Reduce character repetition');
+  if (lowVariety)    sug.push('Use more variety — too many repeated characters');
+  if (z && z.feedback.warning) sug.push(z.feedback.warning);
+  if (z) sug.push(...(z.feedback.suggestions || []));
+  if (pw.length < 8)  sug.push('Use at least 8 characters');
   if (pw.length < 12) sug.push('Increase to 12+ characters for better security');
-  if (!/[a-z]/.test(pw)) sug.push('Add lowercase letters');
   if (!/[A-Z]/.test(pw)) sug.push('Add uppercase letters');
   if (!/[0-9]/.test(pw)) sug.push('Include numbers');
   if (!/[^a-zA-Z0-9]/.test(pw)) sug.push('Add special characters (!@#$%^&*)');
+  const uniqSug = [...new Set(sug)];
   document.getElementById('pw-bar-wrap').style.display = '';
   document.getElementById('pw-str-lbl').textContent = cfg.l;
   document.getElementById('pw-str-lbl').style.color = cfg.c;
-  document.getElementById('pw-ent-lbl').textContent = ent.toFixed(1) + ' bits';
-  const segCount = { 'Very Weak': 1, 'Weak': 2, 'Fair': 3, 'Strong': 4, 'Very Strong': 4 }[str];
+  document.getElementById('pw-ent-lbl').textContent = ent + ' bits';
+  const segCount = [1, 2, 3, 4, 4][effectiveScore];
   document.querySelectorAll('.kit-pw-seg').forEach((s, i) => {
     s.classList.toggle('on', i < segCount);
     s.style.background = i < segCount ? cfg.c : '';
@@ -410,7 +453,7 @@ function runPw(pw) {
     </div>
     <label class="lbl mb8">Security checklist</label>
     <div class="ck-grid mb12">${checks.map(c => `<div class="ck-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c.p ? 'var(--green)' : 'var(--tx-3)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${c.p ? '<polyline points="20 6 9 17 4 12"/>' : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}</svg><span style="color:${c.p ? 'var(--tx-1)' : 'var(--tx-3)'}">${c.l}</span></div>`).join('')}</div>
-    ${sug.length ? `<label class="lbl mb8">Suggestions</label><div style="display:flex;flex-direction:column;gap:5px">${sug.map(s => `<div style="font-size:12px;color:var(--tx-2);display:flex;gap:7px;align-items:center"><span style="color:var(--blue)">→</span>${s}</div>`).join('')}</div>` : ''}
+    ${uniqSug.length ? `<label class="lbl mb8">Suggestions</label><div style="display:flex;flex-direction:column;gap:5px">${uniqSug.map(s => `<div style="font-size:12px;color:var(--tx-2);display:flex;gap:7px;align-items:center"><span style="color:var(--blue)">→</span>${s}</div>`).join('')}</div>` : ''}
   </div></div>`;
   res.classList.add('on');
 }
