@@ -208,10 +208,6 @@ function renderShares(shares) {
           ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">Download</a>` : ''}
           ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">Copy link</button>` : ''}
           ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="showQr('${s.token}','${escHtml(s.original_name)}')">QR</button>` : ''}
-          <button class="btn btn-ghost btn-sm" onclick="toggleLogs('${s.id}',this)" title="ดูประวัติดาวน์โหลด">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Logs
-          </button>
           <button class="btn btn-ghost btn-sm" onclick="exportLogsPDF('${s.id}','${escHtml(s.original_name)}')" title="Export PDF">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6M9 11h6M9 18h4"/></svg>
             PDF
