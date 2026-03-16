@@ -419,16 +419,8 @@
               <div style="display:flex;flex-wrap:wrap;gap:5px">
                 <button class="kms-btn kms-on enc-method-btn" data-m="base64" onclick="setEncodeMethod('base64')">Base64</button>
                 <button class="kms-btn enc-method-btn" data-m="hex" onclick="setEncodeMethod('hex')">Hex</button>
-                <button class="kms-btn enc-method-btn" data-m="binary" onclick="setEncodeMethod('binary')">Binary</button>
                 <button class="kms-btn enc-method-btn" data-m="url" onclick="setEncodeMethod('url')">URL</button>
-                <button class="kms-btn enc-method-btn" data-m="rot13" onclick="setEncodeMethod('rot13')">ROT13</button>
-                <button class="kms-btn enc-method-btn" data-m="caesar" onclick="setEncodeMethod('caesar')">Caesar</button>
               </div>
-            </div>
-            <div id="caesar-shift-wrap" style="display:none;align-items:center;gap:10px;margin-bottom:12px">
-              <label class="lbl" style="margin:0;white-space:nowrap">Shift</label>
-              <input class="inp" type="number" id="caesar-shift" value="3" min="1" max="25" style="width:80px"/>
-              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx-3)">1–25</span>
             </div>
             <div class="mb12">
               <label class="lbl">Input</label>
