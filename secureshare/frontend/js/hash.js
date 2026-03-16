@@ -63,11 +63,10 @@ async function hashAll(buf) {
 
 // ── Hash tab switcher ────────────────────────────
 function setHashTab(tab) {
-  ['hash', 'cipher', 'encode'].forEach(t => {
+  ['hash', 'cipher'].forEach(t => {
     document.getElementById('hp-' + t).classList.toggle('on', t === tab);
     const btn = document.getElementById('ht-' + t);
-    btn.classList.toggle('tm', t === tab);
-    btn.classList.toggle('tc', false);
+    if (btn) { btn.classList.toggle('tm', t === tab); btn.classList.toggle('tc', false); }
   });
 }
 
@@ -342,12 +341,18 @@ function detectHashAlgo(val) {
   hint.style.color = algo ? 'var(--cyan)' : 'var(--amber)';
 }
 
+let _lookupRunning = false;
 async function runHashLookup() {
+  if (_lookupRunning) return;
   const hash = document.getElementById('rev-hash').value.trim().toLowerCase();
   if (!hash) { notify('กรอก Hash ก่อน', true); return; }
 
   const algo = HASH_ALGO_BY_LEN[hash.length];
-  if (!algo) { notify('ความยาว Hash ไม่ถูกต้อง', true); return; }
+  if (!algo) { notify('ความยาว Hash ไม่ถูกต้อง — ตรวจสอบว่าวาง Hash ถูกต้อง', true); return; }
+
+  _lookupRunning = true;
+  const lookupBtn = document.querySelector('[onclick="runHashLookup()"]');
+  if (lookupBtn) { lookupBtn.disabled = true; lookupBtn.textContent = 'กำลังค้นหา...'; }
 
   const res = document.getElementById('rev-res');
   res.classList.add('on');
@@ -409,6 +414,11 @@ async function runHashLookup() {
           ข้อมูลต้นฉบับไม่อยู่ใน wordlist — อาจเป็นรหัสผ่านที่ซับซ้อนหรือข้อความยาว ซึ่ง hash จะไม่สามารถถอดได้
         </div>
       </div>`;
+  }
+  _lookupRunning = false;
+  if (lookupBtn) {
+    lookupBtn.disabled = false;
+    lookupBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> ค้นหา';
   }
 }
 

@@ -129,7 +129,7 @@ function setUpFile(f) {
 async function doUpload() {
   if (!upFile) { notify('No file selected.', true); return; }
 
-  const btn = document.querySelector('.btn[onclick="doUpload()"]') || document.querySelector('button[onclick="doUpload()"]');
+  const btn = document.getElementById('up-btn');
   if (btn) btn.disabled = true;
 
   const pw  = document.getElementById('up-prog');
