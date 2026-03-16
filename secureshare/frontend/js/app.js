@@ -207,6 +207,7 @@ function renderShares(shares) {
           ${!dead && s.has_password ? `<button class="btn btn-ghost btn-sm" onclick="openPwModal('${s.token}','${escHtml(s.original_name)}')">🔒 Download</button>` : ''}
           ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">Download</a>` : ''}
           ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">Copy link</button>` : ''}
+          ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="showQr('${s.token}','${escHtml(s.original_name)}')">QR</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="toggleLogs('${s.id}',this)" title="ดูประวัติดาวน์โหลด">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             Logs
@@ -590,6 +591,42 @@ function parseUA_text(ua) {
 }
 
 /* ── Export Logs PDF ─────────────────────────── */
+/* ── QR Code ─────────────────────────────────── */
+function showQr(token, filename) {
+  const url = Shares.getShareLink(token);
+  document.getElementById('qr-filename').textContent = filename;
+  const container = document.getElementById('qr-canvas');
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: url,
+    width: 220,
+    height: 220,
+    colorDark: '#0f172a',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H,
+  });
+  const modal = document.getElementById('qr-modal');
+  modal.style.display = 'flex';
+}
+
+function closeQrModal() {
+  document.getElementById('qr-modal').style.display = 'none';
+}
+
+function downloadQrImage() {
+  const canvas = document.querySelector('#qr-canvas canvas');
+  if (!canvas) return;
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  const name = document.getElementById('qr-filename').textContent.replace(/[^a-z0-9_\-\.]/gi, '_');
+  a.download = `QR_${name}.png`;
+  a.click();
+}
+
+document.getElementById('qr-modal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('qr-modal')) closeQrModal();
+});
+
 async function exportLogsPDF(shareId, filename) {
   notify('กำลังสร้าง PDF...');
   let logs = [];
