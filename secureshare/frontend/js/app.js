@@ -16,7 +16,7 @@ function setMode(m) {
   const isLogin = m === 'si';
   document.getElementById('auth-title').textContent = isLogin ? 'เข้าสู่ระบบ' : 'สมัครใช้งาน';
   document.getElementById('auth-desc').textContent  = isLogin ? 'กรอกอีเมลและรหัสผ่านของคุณเพื่อเข้าใช้งาน' : 'กรอกข้อมูลเพื่อสร้างบัญชีใหม่';
-  document.getElementById('a-btn').textContent      = isLogin ? 'Log in' : 'สมัครสมาชิก';
+  document.getElementById('a-btn').textContent      = isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
   document.getElementById('a-msg').innerHTML = '';
 }
 
@@ -45,7 +45,7 @@ async function doAuth() {
     msg.innerHTML = `<div class="emsg">${map[err.message] || err.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = authMode === 'si' ? 'Log in' : 'สมัครสมาชิก';
+    btn.textContent = authMode === 'si' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
   }
 }
 
@@ -70,8 +70,8 @@ const PAGE_CFG = {
   dash: { cls: 'a-c', accent: 'var(--brand)' },
   hash: { cls: 'a-p', accent: 'var(--purple)' },
   url:  { cls: 'a-g', accent: 'var(--green)' },
-  pass: { cls: 'a-t', accent: 'var(--amber)' },
-  geo:  { cls: 'a-t', accent: 'var(--indigo)' },
+  pass: { cls: 'a-a', accent: 'var(--amber)' },
+  geo:  { cls: 'a-i', accent: 'var(--indigo)' },
 };
 
 const ALL_PAGES = ['dash', 'hash', 'url', 'pass', 'geo'];
@@ -131,7 +131,7 @@ function setUpFile(f) {
 }
 
 async function doUpload() {
-  if (!upFile) { notify('No file selected.', true); return; }
+  if (!upFile) { notify('กรุณาเลือกไฟล์ก่อน', true); return; }
 
   const btn = document.getElementById('up-btn');
   if (btn) btn.disabled = true;
@@ -148,20 +148,20 @@ async function doUpload() {
     const password = document.getElementById('up-pw').value.trim();
     await Shares.upload(upFile, { ttl, maxDownloads: maxDl, password: password || undefined }, p => {
       bar.style.width   = p + '%';
-      pct.textContent   = 'Uploading... ' + p + '%';
+      pct.textContent   = 'กำลังอัปโหลด... ' + p + '%';
     });
     bar.style.width = '100%';
-    pct.textContent = 'Complete!';
-    notify('File uploaded successfully!');
+    pct.textContent = 'อัปโหลดสำเร็จ!';
+    notify('อัปโหลดสำเร็จ!');
     await loadShares();
     setTimeout(() => {
       pw.style.display = 'none';
       if (btn) btn.disabled = false;
       upFile = null;
       document.getElementById('up-dz').classList.remove('has-file');
-      document.getElementById('up-dz-t').textContent = 'Drop file here to upload';
+      document.getElementById('up-dz-t').textContent = 'วางไฟล์ที่นี่เพื่ออัปโหลด';
       document.getElementById('up-dz-t').style.color = '';
-      document.getElementById('up-dz-s').textContent = 'or click to browse · Max 50 MB';
+      document.getElementById('up-dz-s').textContent = 'หรือคลิกเพื่อเลือกไฟล์ · ไม่เกิน 50 MB';
       document.getElementById('up-ttl').value = '24';
       document.getElementById('up-mdl').value = '';
       document.getElementById('up-pw').value = '';
@@ -170,7 +170,7 @@ async function doUpload() {
     pw.style.display = 'none';
     if (btn) btn.disabled = false;
     document.getElementById('up-err').innerHTML = `<div class="emsg">${err.message}</div>`;
-    notify('Upload failed: ' + err.message, true);
+    notify('อัปโหลดล้มเหลว: ' + err.message, true);
   }
 }
 
@@ -186,7 +186,7 @@ function renderShares(shares) {
   document.getElementById('sh-cnt').textContent = '(' + activeCount + ')';
   const list = document.getElementById('sh-list');
   if (!shares.length) {
-    list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--tx-3);font-size:13px">No active transfers</div>';
+    list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--tx-3);font-size:13px">ยังไม่มีการโอนไฟล์</div>';
     return;
   }
   list.innerHTML = shares.map(s => {
@@ -200,16 +200,16 @@ function renderShares(shares) {
           <div class="sr-name">${escHtml(s.original_name)}</div>
           <div class="sr-meta">
             <span>${fmtSz(s.file_size)}</span>
-            <span style="${s.expired ? 'color:var(--red)' : ''}">Expires: ${tl}</span>
-            <span style="${s.limit_reached ? 'color:var(--amber)' : ''}">Downloads: ${s.download_count}${s.max_downloads ? '/' + s.max_downloads : ''}</span>
-            ${s.expired ? '<span class="badge bdg-red">Expired</span>' : ''}
-            ${s.limit_reached ? '<span class="badge bdg-amber">Limit reached</span>' : ''}
+            <span style="${s.expired ? 'color:var(--red)' : ''}">หมดอายุ: ${tl}</span>
+            <span style="${s.limit_reached ? 'color:var(--amber)' : ''}">ดาวน์โหลด: ${s.download_count}${s.max_downloads ? '/' + s.max_downloads : ''}</span>
+            ${s.expired ? '<span class="badge bdg-red">หมดอายุแล้ว</span>' : ''}
+            ${s.limit_reached ? '<span class="badge bdg-amber">ถึงขีดจำกัดแล้ว</span>' : ''}
           </div>
         </div>
         <div class="sr-act">
-          ${!dead && s.has_password ? `<button class="btn btn-ghost btn-sm" onclick="openPwModal('${s.token}','${escHtml(s.original_name)}')">🔒 Download</button>` : ''}
-          ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">Download</a>` : ''}
-          ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">Copy link</button>` : ''}
+          ${!dead && s.has_password ? `<button class="btn btn-ghost btn-sm" onclick="openPwModal('${s.token}','${escHtml(s.original_name)}')">🔒 ดาวน์โหลด</button>` : ''}
+          ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">ดาวน์โหลด</a>` : ''}
+          ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">คัดลอกลิงก์</button>` : ''}
           ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="showQr('${s.token}','${escHtml(s.original_name)}')">QR</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="exportLogsPDF('${s.id}','${escHtml(s.original_name)}')" title="Export PDF">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15h6M9 11h6M9 18h4"/></svg>
@@ -217,7 +217,7 @@ function renderShares(shares) {
           </button>
           ${dead
             ? `<button title="ลบ" onclick="delShare('${s.id}')" style="width:34px;height:34px;border-radius:7px;border:none;background:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(220,38,38,.35);transition:all .15s" onmouseover="this.style.background='#b91c1c';this.style.transform='scale(1.05)'" onmouseout="this.style.background='#dc2626';this.style.transform='scale(1)'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`
-            : `<button class="btn btn-danger btn-sm" onclick="delShare('${s.id}')">Delete</button>`}
+            : `<button class="btn btn-danger btn-sm" onclick="delShare('${s.id}')">ลบ</button>`}
         </div>
       </div>
       <div class="dl-logs" id="logs-${s.id}" style="display:none"></div>
@@ -229,18 +229,18 @@ function copyShareLink(token, btn) {
   const url = Shares.getShareLink(token);
   navigator.clipboard.writeText(url).then(() => {
     const orig = btn.textContent;
-    btn.textContent = '✓ Copied';
+    btn.textContent = '✓ คัดลอกแล้ว';
     setTimeout(() => btn.textContent = orig, 1800);
-    notify('Share link copied!');
+    notify('คัดลอกลิงก์แล้ว');
   });
 }
 
 async function delShare(id) {
   try {
     await Shares.delete(id);
-    notify('Share deleted.');
+    notify('ลบไฟล์แล้ว');
     await loadShares();
-  } catch (err) { notify('Delete failed: ' + err.message, true); }
+  } catch (err) { notify('ลบล้มเหลว: ' + err.message, true); }
 }
 
 /* ── Toolkit ─────────────────────────────────── */
@@ -270,11 +270,11 @@ async function runHash() {
   res.classList.remove('on'); res.innerHTML = '';
   let buf;
   if (hm === 'file') {
-    if (!hFile) { notify('Please select a file.', true); return; }
+    if (!hFile) { notify('กรุณาเลือกไฟล์ก่อน', true); return; }
     buf = await hFile.arrayBuffer();
   } else {
     const t = document.getElementById('h-ti').value;
-    if (!t.trim()) { notify('Please enter text.', true); return; }
+    if (!t.trim()) { notify('กรุณากรอกข้อความก่อน', true); return; }
     buf = new TextEncoder().encode(t).buffer;
   }
   const hashes = await hashAll(buf);
@@ -283,14 +283,14 @@ async function runHash() {
     sha1:   { color: 'var(--red)',    label: 'SHA-1' },
     sha256: { color: 'var(--brand)',  label: 'SHA-256' },
     sha384: { color: 'var(--purple)', label: 'SHA-384' },
-    sha512: { color: '#6366f1',       label: 'SHA-512' },
+    sha512: { color: 'var(--indigo)',  label: 'SHA-512' },
   };
   res.innerHTML = `<div class="card"><div class="cb">` +
     Object.entries(hashes).map(([k, v], i) => `
       <div class="hash-row" style="--i:${i};padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span class="badge" style="color:${meta[k].color};border-color:${meta[k].color}33;background:${meta[k].color}11">${meta[k].label}</span>
-          <button onclick="cpText('${v}',this)" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--tx-1)';this.style.background='var(--bg-4)'" onmouseout="this.style.color='var(--tx-3)';this.style.background='none'">Copy</button>
+          <button onclick="cpText('${v}',this)" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .15s" onmouseover="this.style.color='var(--tx-1)';this.style.background='var(--bg-4)'" onmouseout="this.style.color='var(--tx-3)';this.style.background='none'">คัดลอก</button>
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--tx-1);word-break:break-all;line-height:1.6">${v}</div>
       </div>`).join('') +
@@ -300,11 +300,11 @@ async function runHash() {
 
 function cpText(text, btn) {
   navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent; btn.textContent = '✓ Copied'; btn.style.color = 'var(--green)';
+    const orig = btn.textContent; btn.textContent = '✓ คัดลอกแล้ว'; btn.style.color = 'var(--green)';
     const row = btn.closest('.hash-row');
     if (row) { row.classList.remove('copy-flash'); void row.offsetWidth; row.classList.add('copy-flash'); }
     setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1800);
-    notify('Copied to clipboard!');
+    notify('คัดลอกไปยังคลิปบอร์ดแล้ว');
   });
 }
 

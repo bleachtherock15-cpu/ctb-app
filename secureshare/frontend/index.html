@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
@@ -55,7 +55,7 @@
         <input class="inp" type="password" id="a-pass" placeholder="อย่างน้อย 6 ตัวอักษร" onkeydown="if(event.key==='Enter')doAuth()"/>
       </div>
       <div id="a-msg"></div>
-      <button class="btn btn-primary btn-full btn-lg mt8" onclick="doAuth()" id="a-btn">Log in</button>
+      <button class="btn btn-primary btn-full btn-lg mt8" onclick="doAuth()" id="a-btn">เข้าสู่ระบบ</button>
     </div>
   </div>
 </div>
@@ -183,7 +183,7 @@
       <!-- Upload card -->
       <div class="card mb16">
         <div class="card-header">
-          <div class="card-icon" style="background:rgba(0,229,255,.08)">
+          <div class="card-icon" style="background:rgba(167,59,36,.08)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           </div>
           <div>
@@ -348,7 +348,7 @@
         <div class="card kit-panel">
           <div class="kit-panel-header">
             <div class="kit-panel-title">
-              <span class="kit-badge" style="background:rgba(13,148,136,.1);color:var(--cyan);border-color:rgba(13,148,136,.25)">CIPHER</span>
+              <span class="kit-badge" style="background:rgba(167,59,36,.08);color:var(--brand);border-color:rgba(167,59,36,.22)">CIPHER</span>
               เข้ารหัส / ถอดรหัส
             </div>
           </div>
@@ -439,7 +439,7 @@
       <div class="card kit-panel">
         <div class="kit-panel-header">
           <div class="kit-panel-title">
-            <span class="kit-badge" style="background:rgba(53,208,127,.1);color:var(--green);border-color:rgba(53,208,127,.25)">SCAN</span>
+            <span class="kit-badge" style="background:rgba(22,163,74,.08);color:var(--green);border-color:rgba(22,163,74,.22)">SCAN</span>
             สแกนความเสี่ยง URL
           </div>
         </div>
@@ -476,7 +476,7 @@
       <div class="card kit-panel">
         <div class="kit-panel-header">
           <div class="kit-panel-title">
-            <span class="kit-badge" style="background:rgba(245,166,35,.1);color:var(--amber);border-color:rgba(245,166,35,.25)">LOCK</span>
+            <span class="kit-badge" style="background:rgba(180,83,9,.08);color:var(--amber);border-color:rgba(180,83,9,.22)">LOCK</span>
             วิเคราะห์รหัสผ่าน
           </div>
         </div>
@@ -587,7 +587,7 @@
         <!-- Confidence + location -->
         <div class="geo-conf-card">
           <div class="geo-ring">
-            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(0,229,255,.1)" stroke-width="5"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--cyan)" stroke-width="5" stroke-linecap="round" stroke-dasharray="201.1" id="geo-conf-arc" stroke-dashoffset="201.1" style="transition:stroke-dashoffset 1s ease"/></svg>
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(99,102,241,.15)" stroke-width="5"/><circle cx="40" cy="40" r="32" fill="none" stroke="var(--cyan)" stroke-width="5" stroke-linecap="round" stroke-dasharray="201.1" id="geo-conf-arc" stroke-dashoffset="201.1" style="transition:stroke-dashoffset 1s ease"/></svg>
             <div class="geo-ring-pct" id="geo-conf-pct">0%</div>
           </div>
           <div style="flex:1">
@@ -613,7 +613,7 @@
         <!-- Map link -->
         <a class="geo-map-btn" id="geo-map-link" href="#" target="_blank" rel="noopener">
           <div class="geo-pin-bounce">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3" fill="rgba(0,229,255,.12)"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(0,229,255,.06)"/></svg>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3" fill="rgba(99,102,241,.15)"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="rgba(99,102,241,.08)"/></svg>
           </div>
           <div style="font-size:13px;font-weight:700;color:var(--tx-1)">เปิดใน Google Maps</div>
           <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3)" id="geo-map-label"></div>
@@ -622,7 +622,7 @@
         <!-- Findings -->
         <div class="card mb12">
           <div class="card-header">
-            <div class="card-icon" style="background:rgba(0,229,255,.08)">
+            <div class="card-icon" style="background:rgba(99,102,241,.08)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
             <div><div class="card-title">เบาะแสที่พบในภาพ</div></div>

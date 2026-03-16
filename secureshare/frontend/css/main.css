@@ -13,7 +13,7 @@
   --purple:#7c3aed; --purple-2:#6d28d9; --purple-light:#a78bfa; --purple-dim:rgba(124,58,237,.07);
   --green:#16a34a; --green-2:#15803d;
   --amber:#b45309; --red:#c0392b;
-  --indigo:var(--indigo);
+  --indigo:#6366f1;
   /* legacy aliases — prefer --brand in new code */
   --cyan:var(--brand); --cyan-2:var(--brand-2); --cyan-dim:var(--brand-dim);
   --teal:var(--brand); --teal-2:var(--brand-2);
@@ -93,6 +93,16 @@ body{min-height:100vh;overflow-x:hidden;background:var(--bg)}
   border-left-color:var(--cyan);border-left-width:2px;padding-left:9px}
 .ni.a-t .ni-label{color:var(--cyan);font-weight:700}
 .ni.a-t .ni-icon{background:rgba(167,59,36,.1)}
+
+.ni.a-a{background:rgba(180,83,9,.07);border-color:rgba(180,83,9,.2);
+  border-left-color:var(--amber);border-left-width:2px;padding-left:9px}
+.ni.a-a .ni-label{color:var(--amber);font-weight:700}
+.ni.a-a .ni-icon{background:rgba(180,83,9,.1);border-color:rgba(180,83,9,.22)}
+
+.ni.a-i{background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.2);
+  border-left-color:var(--indigo);border-left-width:2px;padding-left:9px}
+.ni.a-i .ni-label{color:var(--indigo);font-weight:700}
+.ni.a-i .ni-icon{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.22)}
 
 .ni-icon{width:28px;height:28px;border-radius:6px;background:var(--bg-1);
   border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
@@ -638,9 +648,6 @@ input[type=file]{display:none}
 #p-geo .g4 .card:nth-child(2){border-left:3px solid var(--indigo)}
 #p-geo .g4 .card:nth-child(3){border-left:3px solid var(--green)}
 #p-geo .g4 .card:nth-child(4){border-left:3px solid var(--cyan)}
-
-/* Auth eyebrow — teal warmth */
-.auth-form-panel [style*="CTB // CYBER"]{color:var(--cyan) !important}
 
 /* Geo confidence ring uses indigo on GeoSight */
 #geo-conf-arc{stroke:var(--indigo)}
