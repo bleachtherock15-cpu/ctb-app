@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════
-//  hash.js — MD5 + SHA via Web Crypto
+//  hash.js — Hash + Cipher + Encode
 // ═══════════════════════════════════════════════
 
+// ── MD5 (pure JS, no Web Crypto) ────────────────
 function md5(data) {
   function sa(x, y) { var l = (x & 0xffff) + (y & 0xffff); return (((x >> 16) + (y >> 16) + (l >> 16)) << 16) | (l & 0xffff); }
   function rl(x, n) { return (x << n) | (x >>> (32 - n)); }
@@ -42,14 +43,229 @@ function md5(data) {
     .map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
+// ── Hash all (MD5 + SHA-1/256/384/512) ──────────
 async function hashAll(buf) {
-  const [s1, s256] = await Promise.all([
-    crypto.subtle.digest('SHA-1', buf),
-    crypto.subtle.digest('SHA-256', buf),
-  ]);
   const h = a => Array.from(new Uint8Array(a)).map(b => b.toString(16).padStart(2, '0')).join('');
-  return { md5: md5(new Uint8Array(buf)), sha1: h(s1), sha256: h(s256) };
+  const [s1, s256, s384, s512] = await Promise.all([
+    crypto.subtle.digest('SHA-1',   buf),
+    crypto.subtle.digest('SHA-256', buf),
+    crypto.subtle.digest('SHA-384', buf),
+    crypto.subtle.digest('SHA-512', buf),
+  ]);
+  return {
+    md5:    md5(new Uint8Array(buf)),
+    sha1:   h(s1),
+    sha256: h(s256),
+    sha384: h(s384),
+    sha512: h(s512),
+  };
 }
 
-window.md5     = md5;
-window.hashAll = hashAll;
+// ── Hash tab switcher ────────────────────────────
+function setHashTab(tab) {
+  ['hash', 'cipher', 'encode'].forEach(t => {
+    document.getElementById('hp-' + t).classList.toggle('on', t === tab);
+    const btn = document.getElementById('ht-' + t);
+    btn.classList.toggle('tm', t === tab);
+    btn.classList.toggle('tc', false);
+  });
+}
+
+// ════════════════════════════════════════════════
+//  CIPHER — AES / DES / 3DES / RC4 / Rabbit
+// ════════════════════════════════════════════════
+
+const ALGO_HINTS = {
+  AES:    { base: 'AES',      hint: 'AES: คีย์ใดก็ได้ (แนะนำ 16+ ตัวอักษร)' },
+  DES:    { base: 'DES',      hint: 'DES: คีย์ 8 ตัวอักษร — เก่า ใช้เพื่อศึกษา' },
+  '3DES': { base: 'TripleDES',hint: 'Triple DES: คีย์ 24 ตัวอักษร — เก่า ใช้เพื่อศึกษา' },
+  Rabbit: { base: 'Rabbit',   hint: 'Rabbit: Stream cipher — คีย์ใดก็ได้' },
+  RC4:    { base: 'RC4',      hint: 'RC4: Stream cipher — ไม่ปลอดภัย ใช้เพื่อศึกษาเท่านั้น' },
+};
+
+function onAlgoChange() {
+  const algo = document.getElementById('enc-algo').value;
+  const isStream = ['Rabbit', 'RC4'].includes(algo);
+  document.getElementById('enc-mode-wrap').style.display = isStream ? 'none' : '';
+  document.getElementById('enc-key-hint').textContent = (ALGO_HINTS[algo] || {}).hint || '';
+}
+
+function genEncKey() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  document.getElementById('enc-key').value = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+}
+
+function _getCryptoObj(algo) {
+  if (!window.CryptoJS) throw new Error('CryptoJS ไม่พร้อมใช้งาน');
+  const map = { AES: CryptoJS.AES, DES: CryptoJS.DES, '3DES': CryptoJS.TripleDES, Rabbit: CryptoJS.Rabbit, RC4: CryptoJS.RC4 };
+  return map[algo] || CryptoJS.AES;
+}
+
+function _getOpts(algo) {
+  if (['Rabbit', 'RC4'].includes(algo)) return {};
+  const mode = document.getElementById('enc-mode').value;
+  return {
+    mode:    CryptoJS.mode[mode] || CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  };
+}
+
+function runEncrypt() {
+  const algo  = document.getElementById('enc-algo').value;
+  const key   = document.getElementById('enc-key').value.trim();
+  const input = document.getElementById('enc-input').value;
+  if (!key)   { notify('กรอก Secret Key ก่อน', true); return; }
+  if (!input) { notify('กรอกข้อความที่ต้องการเข้ารหัส', true); return; }
+  try {
+    const cipher    = _getCryptoObj(algo);
+    const encrypted = cipher.encrypt(input, key, _getOpts(algo)).toString();
+    _showCipherResult(encrypted, algo, 'encrypt');
+  } catch(e) { notify('Encrypt ไม่สำเร็จ: ' + e.message, true); }
+}
+
+function runDecrypt() {
+  const algo  = document.getElementById('enc-algo').value;
+  const key   = document.getElementById('enc-key').value.trim();
+  const input = document.getElementById('enc-input').value.trim();
+  if (!key)   { notify('กรอก Secret Key ก่อน', true); return; }
+  if (!input) { notify('กรอก Ciphertext ที่ต้องการถอดรหัส', true); return; }
+  try {
+    const cipher    = _getCryptoObj(algo);
+    const decrypted = cipher.decrypt(input, key, _getOpts(algo)).toString(CryptoJS.enc.Utf8);
+    if (!decrypted) throw new Error('คีย์ไม่ถูกต้อง หรือ ciphertext เสียหาย');
+    _showCipherResult(decrypted, algo, 'decrypt');
+  } catch(e) { notify('Decrypt ไม่สำเร็จ: ' + e.message, true); }
+}
+
+function _showCipherResult(output, algo, op) {
+  const isStream = ['Rabbit', 'RC4'].includes(algo);
+  const mode  = isStream ? '' : ('-' + (document.getElementById('enc-mode').value));
+  const label = algo + mode;
+  const opTh  = op === 'encrypt' ? 'Ciphertext (เข้ารหัสแล้ว)' : 'Plaintext (ถอดรหัสแล้ว)';
+  const color = op === 'encrypt' ? 'var(--cyan)' : 'var(--purple)';
+  const res   = document.getElementById('enc-res');
+  res.classList.add('on');
+  res.innerHTML = `
+    <div class="card" style="border-left:3px solid ${color}">
+      <div class="card-header">
+        <span class="badge" style="color:${color};border-color:${color}40;background:${color}18">${label}</span>
+        <div class="card-title">${opTh}</div>
+      </div>
+      <div class="cb" style="padding:16px">
+        <div class="term" style="word-break:break-all;line-height:1.9;font-size:11px;white-space:pre-wrap;max-height:260px;overflow-y:auto">${escHtml(output)}</div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(output)}).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('enc-input').value=${JSON.stringify(output)};notify('วางลง Input แล้ว')">ใส่ Input</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════
+//  ENCODE — Base64 / Hex / Binary / URL / ROT13 / Caesar
+// ════════════════════════════════════════════════
+
+let encodeMethod = 'base64';
+
+function setEncodeMethod(m) {
+  encodeMethod = m;
+  document.querySelectorAll('.enc-method-btn').forEach(b =>
+    b.classList.toggle('kms-on', b.dataset.m === m)
+  );
+  document.getElementById('caesar-shift-wrap').style.display = m === 'caesar' ? 'flex' : 'none';
+}
+
+function runEncode() {
+  const input = document.getElementById('cod-input').value;
+  if (!input) { notify('กรอกข้อความก่อน', true); return; }
+  try {
+    _showEncodeResult(_encode(input), 'encode');
+  } catch(e) { notify('แปลงไม่สำเร็จ: ' + e.message, true); }
+}
+
+function runDecode() {
+  const input = document.getElementById('cod-input').value;
+  if (!input) { notify('กรอกข้อความก่อน', true); return; }
+  try {
+    _showEncodeResult(_decode(input), 'decode');
+  } catch(e) { notify('แปลงกลับไม่สำเร็จ: ' + e.message, true); }
+}
+
+function _encode(input) {
+  const shift = parseInt(document.getElementById('caesar-shift')?.value) || 3;
+  switch (encodeMethod) {
+    case 'base64':  return btoa(unescape(encodeURIComponent(input)));
+    case 'hex':     return Array.from(new TextEncoder().encode(input)).map(b => b.toString(16).padStart(2,'0')).join(' ');
+    case 'binary':  return Array.from(new TextEncoder().encode(input)).map(b => b.toString(2).padStart(8,'0')).join(' ');
+    case 'url':     return encodeURIComponent(input);
+    case 'rot13':   return _rot13(input);
+    case 'caesar':  return _caesar(input, shift);
+    default: return input;
+  }
+}
+
+function _decode(input) {
+  const shift = parseInt(document.getElementById('caesar-shift')?.value) || 3;
+  switch (encodeMethod) {
+    case 'base64':  return decodeURIComponent(escape(atob(input.trim())));
+    case 'hex':     return new TextDecoder().decode(new Uint8Array(input.match(/[0-9a-fA-F]{2}/g).map(h => parseInt(h, 16))));
+    case 'binary':  return new TextDecoder().decode(new Uint8Array(input.trim().split(/\s+/).map(b => parseInt(b, 2))));
+    case 'url':     return decodeURIComponent(input);
+    case 'rot13':   return _rot13(input);
+    case 'caesar':  return _caesar(input, 26 - shift);
+    default: return input;
+  }
+}
+
+function _rot13(s) {
+  return s.replace(/[a-zA-Z]/g, c => {
+    const base = c <= 'Z' ? 65 : 97;
+    return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
+  });
+}
+
+function _caesar(s, shift) {
+  return s.replace(/[a-zA-Z]/g, c => {
+    const base = c <= 'Z' ? 65 : 97;
+    return String.fromCharCode(((c.charCodeAt(0) - base + shift) % 26) + base);
+  });
+}
+
+const ENCODE_LABELS = {
+  base64: 'Base64', hex: 'Hexadecimal', binary: 'Binary',
+  url: 'URL Encoding', rot13: 'ROT13', caesar: 'Caesar Cipher',
+};
+
+function _showEncodeResult(output, op) {
+  const color = op === 'encode' ? 'var(--green)' : 'var(--purple)';
+  const opTh  = op === 'encode' ? 'Encoded Output' : 'Decoded Output';
+  const label = ENCODE_LABELS[encodeMethod] || encodeMethod;
+  const res   = document.getElementById('cod-res');
+  res.classList.add('on');
+  res.innerHTML = `
+    <div class="card" style="border-left:3px solid ${color}">
+      <div class="card-header">
+        <span class="badge" style="color:${color};border-color:${color}40;background:${color}18">${label}</span>
+        <div class="card-title">${opTh}</div>
+      </div>
+      <div class="cb" style="padding:16px">
+        <div class="term" style="word-break:break-all;line-height:1.9;font-size:11px;white-space:pre-wrap;max-height:260px;overflow-y:auto">${escHtml(output)}</div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(output)}).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cod-input').value=${JSON.stringify(output)};notify('วางลง Input แล้ว')">ใส่ Input</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+window.md5          = md5;
+window.hashAll      = hashAll;
+window.setHashTab   = setHashTab;
+window.onAlgoChange = onAlgoChange;
+window.genEncKey    = genEncKey;
+window.runEncrypt   = runEncrypt;
+window.runDecrypt   = runDecrypt;
+window.setEncodeMethod = setEncodeMethod;
+window.runEncode    = runEncode;
+window.runDecode    = runDecode;

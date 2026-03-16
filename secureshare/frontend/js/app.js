@@ -275,7 +275,13 @@ async function runHash() {
     buf = new TextEncoder().encode(t).buffer;
   }
   const hashes = await hashAll(buf);
-  const meta = { md5: { color: 'var(--amber)', label: 'MD5' }, sha1: { color: 'var(--red)', label: 'SHA-1' }, sha256: { color: 'var(--blue)', label: 'SHA-256' } };
+  const meta = {
+    md5:    { color: 'var(--amber)',  label: 'MD5' },
+    sha1:   { color: 'var(--red)',    label: 'SHA-1' },
+    sha256: { color: 'var(--blue)',   label: 'SHA-256' },
+    sha384: { color: 'var(--purple)', label: 'SHA-384' },
+    sha512: { color: '#6366f1',       label: 'SHA-512' },
+  };
   res.innerHTML = `<div class="card"><div class="cb">` +
     Object.entries(hashes).map(([k, v]) => `
       <div style="padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px">
