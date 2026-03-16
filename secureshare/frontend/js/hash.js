@@ -294,6 +294,127 @@ function _showEncodeResult(output, op) {
     </div>`;
 }
 
+// ════════════════════════════════════════════════
+//  HASH LOOKUP — dictionary + numbers brute force
+// ════════════════════════════════════════════════
+
+const HASH_ALGO_BY_LEN = { 32:'MD5', 40:'SHA-1', 64:'SHA-256', 96:'SHA-384', 128:'SHA-512' };
+
+// Top common passwords + words
+const WORDLIST = [
+  'password','123456','12345678','qwerty','abc123','monkey','1234567','letmein',
+  'trustno1','dragon','baseball','iloveyou','master','sunshine','ashley','bailey',
+  'passw0rd','shadow','123123','654321','superman','qazwsx','michael','football',
+  'password1','princess','solo','welcome','charlie','donald','batman','zaq1zaq1',
+  'pass','hello','admin','root','test','user','guest','login','password123',
+  'qwerty123','love','sex','god','money','fuck','shit','bitch','ass','nigga',
+  'jordan','harley','ranger','dakota','soccer','hockey','killer','george',
+  'thomas','samuel','andrew','jessica','pepper','hunter','joshua','maggie',
+  'robert','daniel','stephen','matthew','jennifer','summer','amanda','andrea',
+  'pepper','cookie','cheese','butter','chocolate','coffee','banana','orange',
+  'apple','mango','lemon','coconut','strawberry','blueberry','watermelon',
+  'cat','dog','fish','bird','tiger','lion','bear','wolf','eagle','snake',
+  'red','blue','green','yellow','black','white','purple','orange','pink',
+  'one','two','three','four','five','six','seven','eight','nine','ten',
+  'january','february','march','april','may','june','july','august',
+  'september','october','november','december','monday','tuesday','wednesday',
+  'thursday','friday','saturday','sunday','spring','summer','autumn','winter',
+  'thailand','bangkok','khonkaen','kku','chiang','phuket','pattaya',
+  'thai','english','chinese','japanese','korean','french','german','spanish',
+  'facebook','twitter','google','youtube','instagram','tiktok','line','gmail',
+  'qwert','asdfg','zxcvb','12345','11111','00000','99999','55555','88888',
+  'abc','abcd','abcde','abcdef','abcdefg','abcdefgh','abcdefghi',
+  'pass123','pass1234','admin123','root123','test123','user123','guest123',
+  'p@ssw0rd','P@ssword','Pa$$word','P@$$w0rd','Passw0rd','Password1',
+  'letmein1','welcome1','dragon1','sunshine1','princess1','master1',
+  'a','b','c','d','e','f','g','h','i','j','k','l','m',
+  'n','o','p','q','r','s','t','u','v','w','x','y','z',
+  'aa','bb','cc','dd','ee','ff','gg','hh','ii','jj','kk','ll','mm',
+  'aaa','bbb','ccc','ddd','eee','fff','ggg','hhh','iii','jjj','kkk',
+  'aaaa','bbbb','cccc','dddd','eeee','ffff','gggg','hhhh','iiii',
+];
+
+function detectHashAlgo(val) {
+  const len = val.trim().length;
+  const algo = HASH_ALGO_BY_LEN[len];
+  const hint = document.getElementById('rev-algo-hint');
+  hint.textContent = algo ? `ตรวจพบ: ${algo}` : len > 0 ? 'ไม่รู้จักความยาวนี้' : '';
+  hint.style.color = algo ? 'var(--cyan)' : 'var(--amber)';
+}
+
+async function runHashLookup() {
+  const hash = document.getElementById('rev-hash').value.trim().toLowerCase();
+  if (!hash) { notify('กรอก Hash ก่อน', true); return; }
+
+  const algo = HASH_ALGO_BY_LEN[hash.length];
+  if (!algo) { notify('ความยาว Hash ไม่ถูกต้อง', true); return; }
+
+  const res = document.getElementById('rev-res');
+  res.classList.add('on');
+  res.innerHTML = `<div class="card"><div class="cb" style="padding:16px;text-align:center;color:var(--tx-3)">
+    <div style="margin-bottom:8px">กำลังค้นหา ${algo}...</div>
+    <div class="ptrack" style="max-width:300px;margin:0 auto"><div class="pfill pf-teal" id="rev-prog" style="width:0%;transition:width .1s"></div></div>
+  </div></div>`;
+
+  const enc = new TextEncoder();
+  const h = a => Array.from(new Uint8Array(a)).map(b => b.toString(16).padStart(2,'0')).join('');
+
+  // Build candidates: wordlist + numbers 0-9999
+  const candidates = [...WORDLIST];
+  for (let i = 0; i <= 9999; i++) candidates.push(String(i));
+  const total = candidates.length;
+
+  const hashOne = async (word) => {
+    const buf = enc.encode(word).buffer;
+    if (algo === 'MD5') return md5(new Uint8Array(buf));
+    const name = algo === 'SHA-1' ? 'SHA-1' : algo;
+    return h(await crypto.subtle.digest(name, buf));
+  };
+
+  // Process in batches of 200
+  const BATCH = 200;
+  let found = null;
+  for (let i = 0; i < total; i += BATCH) {
+    const chunk = candidates.slice(i, i + BATCH);
+    const results = await Promise.all(chunk.map(async w => ({ w, d: await hashOne(w) })));
+    found = results.find(r => r.d === hash);
+    if (found) break;
+    // Update progress bar
+    const prog = document.getElementById('rev-prog');
+    if (prog) prog.style.width = Math.min(100, ((i + BATCH) / total * 100)).toFixed(0) + '%';
+    await new Promise(r => setTimeout(r, 0)); // yield to UI
+  }
+
+  if (found) {
+    res.innerHTML = `
+      <div class="card" style="border-left:3px solid var(--green)">
+        <div class="card-header">
+          <span class="badge bdg-green">พบข้อมูลต้นฉบับ</span>
+          <div class="card-title">${algo} → Plaintext</div>
+        </div>
+        <div class="cb" style="padding:16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--tx-1);margin-bottom:8px">${escHtml(found.w)}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3);margin-bottom:12px">${hash}</div>
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(found.w)}).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
+        </div>
+      </div>`;
+  } else {
+    res.innerHTML = `
+      <div class="card" style="border-left:3px solid var(--amber)">
+        <div class="card-header">
+          <span class="badge bdg-amber">ไม่พบในฐานข้อมูล</span>
+          <div class="card-title">ค้นหา ${total.toLocaleString()} candidates แล้ว</div>
+        </div>
+        <div class="cb" style="padding:16px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx-3);line-height:1.6">
+          ข้อมูลต้นฉบับไม่อยู่ใน wordlist — อาจเป็นรหัสผ่านที่ซับซ้อนหรือข้อความยาว ซึ่ง hash จะไม่สามารถถอดได้
+        </div>
+      </div>`;
+  }
+}
+
+window.detectHashAlgo  = detectHashAlgo;
+window.runHashLookup   = runHashLookup;
+
 window.md5             = md5;
 window.hashAll         = hashAll;
 window.setHashTab      = setHashTab;

@@ -318,6 +318,31 @@
           </div>
         </div>
         <div class="rp" id="h-res"></div>
+
+        <!-- Hash Lookup card -->
+        <div class="card kit-panel mt16">
+          <div class="kit-panel-header">
+            <div class="kit-panel-title">
+              <span class="kit-badge" style="background:rgba(217,119,6,.1);color:var(--amber);border-color:rgba(217,119,6,.25)">LOOKUP</span>
+              ค้นหา Hash กลับ
+            </div>
+          </div>
+          <div class="cb">
+            <div class="mb12" style="font-family:'DM Sans',sans-serif;font-size:12px;color:var(--tx-3);line-height:1.6;padding:10px 12px;background:var(--bg-1);border:1px solid var(--border);border-radius:var(--rs)">
+              Hash เป็น one-way function — ไม่สามารถถอดได้จริง แต่ระบบจะลองค้นหาจาก <strong style="color:var(--tx-2)">wordlist รหัสผ่านทั่วไป + ตัวเลข 0–9999</strong> หากข้อมูลต้นฉบับเป็นคำง่ายๆ จะพบได้
+            </div>
+            <div class="mb12">
+              <label class="lbl">วาง Hash ที่ต้องการค้นหา</label>
+              <input class="inp" id="rev-hash" placeholder="e.g. b5c0b187fe309af0f4d35982fd961d7e" style="font-family:'JetBrains Mono',monospace;font-size:12px" oninput="detectHashAlgo(this.value)"/>
+              <div id="rev-algo-hint" style="margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3)"></div>
+            </div>
+            <button class="btn btn-primary btn-full" style="padding:12px" onclick="runHashLookup()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              ค้นหา
+            </button>
+          </div>
+        </div>
+        <div class="rp" id="rev-res"></div>
       </div>
 
       <!-- ── TAB: CIPHER ── -->
