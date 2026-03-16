@@ -72,70 +72,105 @@ function setHashTab(tab) {
 }
 
 // ════════════════════════════════════════════════
-//  CIPHER — AES / DES / 3DES / RC4 / Rabbit
+//  CIPHER — AES (CryptoJS) + RSA (Web Crypto API)
 // ════════════════════════════════════════════════
 
-const ALGO_HINTS = {
-  AES:    { base: 'AES',      hint: 'AES: คีย์ใดก็ได้ (แนะนำ 16+ ตัวอักษร)' },
-  DES:    { base: 'DES',      hint: 'DES: คีย์ 8 ตัวอักษร — เก่า ใช้เพื่อศึกษา' },
-  '3DES': { base: 'TripleDES',hint: 'Triple DES: คีย์ 24 ตัวอักษร — เก่า ใช้เพื่อศึกษา' },
-  Rabbit: { base: 'Rabbit',   hint: 'Rabbit: Stream cipher — คีย์ใดก็ได้' },
-  RC4:    { base: 'RC4',      hint: 'RC4: Stream cipher — ไม่ปลอดภัย ใช้เพื่อศึกษาเท่านั้น' },
-};
+let _rsaKeyPair = null; // { publicKey, privateKey } CryptoKey objects
 
 function onAlgoChange() {
   const algo = document.getElementById('enc-algo').value;
-  const isStream = ['Rabbit', 'RC4'].includes(algo);
-  document.getElementById('enc-mode-wrap').style.display = isStream ? 'none' : '';
-  document.getElementById('enc-key-hint').textContent = (ALGO_HINTS[algo] || {}).hint || '';
+  const isRsa = algo.startsWith('RSA');
+  document.getElementById('aes-key-wrap').style.display = isRsa ? 'none' : '';
+  document.getElementById('enc-mode-wrap').style.display = isRsa ? 'none' : '';
+  document.getElementById('rsa-key-wrap').style.display  = isRsa ? '' : 'none';
+  document.getElementById('enc-key-hint').textContent = isRsa ? '' :
+    'AES: คีย์ใดก็ได้ (แนะนำ 16+ ตัวอักษร)';
 }
 
 function genEncKey() {
   const arr = new Uint8Array(32);
   crypto.getRandomValues(arr);
-  document.getElementById('enc-key').value = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
+  document.getElementById('enc-key').value =
+    Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,32);
 }
 
-function _getCryptoObj(algo) {
-  if (!window.CryptoJS) throw new Error('CryptoJS ไม่พร้อมใช้งาน');
-  const map = { AES: CryptoJS.AES, DES: CryptoJS.DES, '3DES': CryptoJS.TripleDES, Rabbit: CryptoJS.Rabbit, RC4: CryptoJS.RC4 };
-  return map[algo] || CryptoJS.AES;
-}
-
-function _getOpts(algo) {
-  if (['Rabbit', 'RC4'].includes(algo)) return {};
+// ── AES via CryptoJS ──────────────────────────
+function _aesOpts() {
   const mode = document.getElementById('enc-mode').value;
-  return {
-    mode:    CryptoJS.mode[mode] || CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  };
+  return { mode: CryptoJS.mode[mode] || CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 };
 }
 
-function runEncrypt() {
+// ── RSA via Web Crypto API ────────────────────
+async function genRsaKeyPair() {
   const algo  = document.getElementById('enc-algo').value;
-  const key   = document.getElementById('enc-key').value.trim();
+  const bits  = algo === 'RSA-4096' ? 4096 : 2048;
+  const btn   = document.getElementById('rsa-gen-btn');
+  btn.disabled = true; btn.textContent = 'กำลังสร้าง...';
+  try {
+    _rsaKeyPair = await crypto.subtle.generateKey(
+      { name:'RSA-OAEP', modulusLength:bits, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256' },
+      true, ['encrypt','decrypt']
+    );
+    const [pubDer, privDer] = await Promise.all([
+      crypto.subtle.exportKey('spki',  _rsaKeyPair.publicKey),
+      crypto.subtle.exportKey('pkcs8', _rsaKeyPair.privateKey),
+    ]);
+    const toPem = (der, type) => `-----BEGIN ${type}-----\n` +
+      btoa(String.fromCharCode(...new Uint8Array(der))).match(/.{1,64}/g).join('\n') +
+      `\n-----END ${type}-----`;
+    document.getElementById('rsa-pub').value  = toPem(pubDer,  'PUBLIC KEY');
+    document.getElementById('rsa-priv').value = toPem(privDer, 'PRIVATE KEY');
+    document.getElementById('rsa-keys').style.display = '';
+    notify('สร้าง RSA Key Pair สำเร็จ');
+  } catch(e) { notify('สร้าง Key Pair ไม่สำเร็จ: ' + e.message, true); }
+  btn.disabled = false; btn.textContent = 'สร้างใหม่';
+}
+
+async function runEncrypt() {
+  const algo  = document.getElementById('enc-algo').value;
   const input = document.getElementById('enc-input').value;
-  if (!key)   { notify('กรอก Secret Key ก่อน', true); return; }
   if (!input) { notify('กรอกข้อความที่ต้องการเข้ารหัส', true); return; }
-  try {
-    const cipher    = _getCryptoObj(algo);
-    const encrypted = cipher.encrypt(input, key, _getOpts(algo)).toString();
-    _showCipherResult(encrypted, algo, 'encrypt');
-  } catch(e) { notify('Encrypt ไม่สำเร็จ: ' + e.message, true); }
+
+  if (algo.startsWith('RSA')) {
+    if (!_rsaKeyPair) { notify('กด "สร้าง Key Pair" ก่อน', true); return; }
+    try {
+      const enc = await crypto.subtle.encrypt(
+        { name:'RSA-OAEP' }, _rsaKeyPair.publicKey, new TextEncoder().encode(input)
+      );
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(enc)));
+      _showCipherResult(b64, algo, 'encrypt');
+    } catch(e) { notify('RSA Encrypt ไม่สำเร็จ: ' + e.message, true); }
+  } else {
+    const key = document.getElementById('enc-key').value.trim();
+    if (!key) { notify('กรอก Secret Key ก่อน', true); return; }
+    try {
+      const encrypted = CryptoJS.AES.encrypt(input, key, _aesOpts()).toString();
+      _showCipherResult(encrypted, algo, 'encrypt');
+    } catch(e) { notify('AES Encrypt ไม่สำเร็จ: ' + e.message, true); }
+  }
 }
 
-function runDecrypt() {
+async function runDecrypt() {
   const algo  = document.getElementById('enc-algo').value;
-  const key   = document.getElementById('enc-key').value.trim();
   const input = document.getElementById('enc-input').value.trim();
-  if (!key)   { notify('กรอก Secret Key ก่อน', true); return; }
   if (!input) { notify('กรอก Ciphertext ที่ต้องการถอดรหัส', true); return; }
-  try {
-    const cipher    = _getCryptoObj(algo);
-    const decrypted = cipher.decrypt(input, key, _getOpts(algo)).toString(CryptoJS.enc.Utf8);
-    if (!decrypted) throw new Error('คีย์ไม่ถูกต้อง หรือ ciphertext เสียหาย');
-    _showCipherResult(decrypted, algo, 'decrypt');
-  } catch(e) { notify('Decrypt ไม่สำเร็จ: ' + e.message, true); }
+
+  if (algo.startsWith('RSA')) {
+    if (!_rsaKeyPair) { notify('ต้องใช้ Private Key จาก Key Pair เดิม', true); return; }
+    try {
+      const raw = Uint8Array.from(atob(input), c => c.charCodeAt(0));
+      const dec = await crypto.subtle.decrypt({ name:'RSA-OAEP' }, _rsaKeyPair.privateKey, raw);
+      _showCipherResult(new TextDecoder().decode(dec), algo, 'decrypt');
+    } catch(e) { notify('RSA Decrypt ไม่สำเร็จ: ' + e.message, true); }
+  } else {
+    const key = document.getElementById('enc-key').value.trim();
+    if (!key) { notify('กรอก Secret Key ก่อน', true); return; }
+    try {
+      const dec = CryptoJS.AES.decrypt(input, key, _aesOpts()).toString(CryptoJS.enc.Utf8);
+      if (!dec) throw new Error('คีย์ไม่ถูกต้อง หรือ ciphertext เสียหาย');
+      _showCipherResult(dec, algo, 'decrypt');
+    } catch(e) { notify('AES Decrypt ไม่สำเร็จ: ' + e.message, true); }
+  }
 }
 
 function _showCipherResult(output, algo, op) {
@@ -259,13 +294,14 @@ function _showEncodeResult(output, op) {
     </div>`;
 }
 
-window.md5          = md5;
-window.hashAll      = hashAll;
-window.setHashTab   = setHashTab;
-window.onAlgoChange = onAlgoChange;
-window.genEncKey    = genEncKey;
-window.runEncrypt   = runEncrypt;
-window.runDecrypt   = runDecrypt;
+window.md5             = md5;
+window.hashAll         = hashAll;
+window.setHashTab      = setHashTab;
+window.onAlgoChange    = onAlgoChange;
+window.genEncKey       = genEncKey;
+window.genRsaKeyPair   = genRsaKeyPair;
+window.runEncrypt      = runEncrypt;
+window.runDecrypt      = runDecrypt;
 window.setEncodeMethod = setEncodeMethod;
-window.runEncode    = runEncode;
-window.runDecode    = runDecode;
+window.runEncode       = runEncode;
+window.runDecode       = runDecode;

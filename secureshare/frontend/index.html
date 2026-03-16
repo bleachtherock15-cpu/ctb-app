@@ -332,18 +332,14 @@
               <div>
                 <label class="lbl">อัลกอริทึม</label>
                 <select class="inp" id="enc-algo" onchange="onAlgoChange()">
-                  <optgroup label="── AES (แนะนำ) ──">
-                    <option value="AES" data-bits="256" selected>AES-256-CBC</option>
-                    <option value="AES" data-bits="192">AES-192-CBC</option>
-                    <option value="AES" data-bits="128">AES-128-CBC</option>
+                  <optgroup label="── AES (Symmetric) ──">
+                    <option value="AES-256" selected>AES-256</option>
+                    <option value="AES-192">AES-192</option>
+                    <option value="AES-128">AES-128</option>
                   </optgroup>
-                  <optgroup label="── Block Ciphers ──">
-                    <option value="DES">DES (64-bit)</option>
-                    <option value="3DES">Triple DES / 3DES</option>
-                  </optgroup>
-                  <optgroup label="── Stream Ciphers ──">
-                    <option value="Rabbit">Rabbit</option>
-                    <option value="RC4">RC4 (legacy)</option>
+                  <optgroup label="── RSA (Asymmetric) ──">
+                    <option value="RSA-2048">RSA-2048</option>
+                    <option value="RSA-4096">RSA-4096</option>
                   </optgroup>
                 </select>
               </div>
@@ -358,7 +354,9 @@
                 </select>
               </div>
             </div>
-            <div class="mb12">
+
+            <!-- AES: key input -->
+            <div id="aes-key-wrap" class="mb12">
               <label class="lbl">Secret Key / รหัสลับ</label>
               <div style="display:flex;gap:6px">
                 <input class="inp" id="enc-key" placeholder="กรอกรหัสลับ" style="flex:1;font-family:'JetBrains Mono',monospace;font-size:12px"/>
@@ -366,9 +364,28 @@
               </div>
               <div id="enc-key-hint" style="margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--tx-3)"></div>
             </div>
+
+            <!-- RSA: key pair -->
+            <div id="rsa-key-wrap" style="display:none" class="mb12">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <label class="lbl" style="margin:0">Key Pair</label>
+                <button class="btn btn-ghost btn-sm" onclick="genRsaKeyPair()" id="rsa-gen-btn">สร้าง Key Pair</button>
+              </div>
+              <div id="rsa-keys" style="display:none">
+                <div class="mb8">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);font-weight:700;margin-bottom:4px">PUBLIC KEY (ใช้เข้ารหัส)</div>
+                  <textarea class="inp" id="rsa-pub" rows="4" readonly style="font-family:'JetBrains Mono',monospace;font-size:10px;resize:none;color:var(--tx-2)"></textarea>
+                </div>
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--amber);font-weight:700;margin-bottom:4px">PRIVATE KEY (ใช้ถอดรหัส — เก็บเป็นความลับ)</div>
+                  <textarea class="inp" id="rsa-priv" rows="4" readonly style="font-family:'JetBrains Mono',monospace;font-size:10px;resize:none;color:var(--tx-2)"></textarea>
+                </div>
+              </div>
+            </div>
+
             <div class="mb12">
               <label class="lbl">Input</label>
-              <textarea class="inp" rows="5" id="enc-input" placeholder="ข้อความสำหรับเข้ารหัส หรือ Ciphertext สำหรับถอดรหัส..." style="font-family:'JetBrains Mono',monospace;font-size:12px;resize:none"></textarea>
+              <textarea class="inp" rows="4" id="enc-input" placeholder="ข้อความสำหรับเข้ารหัส หรือ Ciphertext (Base64) สำหรับถอดรหัส..." style="font-family:'JetBrains Mono',monospace;font-size:12px;resize:none"></textarea>
             </div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-primary" style="flex:1;padding:12px" onclick="runEncrypt()">
