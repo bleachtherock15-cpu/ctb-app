@@ -407,6 +407,15 @@ function runPw(pw) {
   else if (hasKeyboard || hasSeq)       effectiveScore = Math.min(effectiveScore, 1);
   else if (hasRepeat || lowVariety)     effectiveScore = Math.min(effectiveScore, 2);
 
+  // Hard override: crack time is the authoritative security signal
+  if (z) {
+    const secs = z.crack_times_seconds.offline_fast_hashing_1e10_per_second;
+    if      (secs < 1)       effectiveScore = Math.min(effectiveScore, 0);
+    else if (secs < 3600)    effectiveScore = Math.min(effectiveScore, 1);
+    else if (secs < 86400)   effectiveScore = Math.min(effectiveScore, 2);
+    else if (secs < 2592000) effectiveScore = Math.min(effectiveScore, 3);
+  }
+
   const scoreMap = [
     { c: 'var(--red)',    w: '8%',   l: 'อันตราย'      },
     { c: '#e06c75',       w: '22%',  l: 'อ่อนแอ'       },
