@@ -49,6 +49,8 @@ async function doAuth() {
   }
 }
 
+let _shareInterval = null;
+
 function startApp() {
   const user = Auth.getUser();
   document.getElementById('auth').classList.add('off');
@@ -56,14 +58,17 @@ function startApp() {
   if (user) {
     document.getElementById('sb-email').textContent = user.email;
     document.getElementById('sb-av').textContent    = user.email[0].toUpperCase();
-    document.getElementById('user-email').textContent = user.email;
   }
   goPage('dash');
   loadShares();
-  setInterval(loadShares, 30000);
+  _shareInterval = setInterval(loadShares, 30000);
 }
 
-function signOut() { Auth.logout(); }
+function signOut() {
+  clearInterval(_shareInterval);
+  _shareInterval = null;
+  Auth.logout();
+}
 
 /* ── Navigation ──────────────────────────────── */
 const PAGE_CFG = {
@@ -531,17 +536,6 @@ function notify(msg, err = false) {
   ntTimer = setTimeout(() => el.classList.remove('on', 'er', 'ok'), 2800);
 }
 
-// Fix: expose user-email element (sidebar)
-document.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('user-email');
-  if (!el) {
-    const span = document.createElement('span');
-    span.id = 'user-email';
-    span.style.display = 'none';
-    document.body.appendChild(span);
-  }
-});
-
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop',     e => e.preventDefault());
 
@@ -665,7 +659,7 @@ async function showQr(token, filename) {
     text: url,
     width: 220,
     height: 220,
-    colorDark: '#0f172a',
+    colorDark: '#1a1714',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.H,
   });
@@ -689,6 +683,14 @@ function downloadQrImage() {
 
 document.getElementById('qr-modal')?.addEventListener('click', e => {
   if (e.target === document.getElementById('qr-modal')) closeQrModal();
+});
+document.getElementById('pw-modal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('pw-modal')) closePwModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('qr-modal')?.style.display === 'flex') closeQrModal();
+  if (document.getElementById('pw-modal')?.style.display === 'flex') closePwModal();
 });
 
 async function exportLogsPDF(shareId, filename) {
