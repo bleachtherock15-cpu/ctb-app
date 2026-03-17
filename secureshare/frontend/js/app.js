@@ -433,7 +433,8 @@ function runPw(pw) {
   // Entropy bits
   const ent = z ? (z.guesses_log10 * Math.log2(10)).toFixed(1) : (pw.length * Math.log2(26)).toFixed(1);
 
-  const score = Math.round(checks.filter(c => c.p).length / checks.length * 100);
+  const scoreCap = [20, 40, 60, 80, 100][effectiveScore];
+  const score = Math.min(scoreCap, Math.round(checks.filter(c => c.p).length / checks.length * 100));
 
   // Suggestions
   const sug = [];
