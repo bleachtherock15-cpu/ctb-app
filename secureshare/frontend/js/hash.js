@@ -189,11 +189,12 @@ function _showCipherResult(output, algo, op) {
       <div class="cb" style="padding:16px">
         <div class="term" style="word-break:break-all;line-height:1.9;font-size:11px;white-space:pre-wrap;max-height:260px;overflow-y:auto">${escHtml(output)}</div>
         <div style="display:flex;gap:6px;margin-top:10px">
-          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(output)}).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('enc-input').value=${JSON.stringify(output)};notify('วางลง Input แล้ว')">ใส่ Input</button>
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(window._cipherOut).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('enc-input').value=window._cipherOut;notify('วางลง Input แล้ว')">ใส่ Input</button>
         </div>
       </div>
     </div>`;
+  window._cipherOut = output;
 }
 
 // ════════════════════════════════════════════════
@@ -286,11 +287,12 @@ function _showEncodeResult(output, op) {
       <div class="cb" style="padding:16px">
         <div class="term" style="word-break:break-all;line-height:1.9;font-size:11px;white-space:pre-wrap;max-height:260px;overflow-y:auto">${escHtml(output)}</div>
         <div style="display:flex;gap:6px;margin-top:10px">
-          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(output)}).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cod-input').value=${JSON.stringify(output)};notify('วางลง Input แล้ว')">ใส่ Input</button>
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(window._cipherOut).then(()=>notify('คัดลอกแล้ว'))">คัดลอก</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cod-input').value=window._cipherOut;notify('วางลง Input แล้ว')">ใส่ Input</button>
         </div>
       </div>
     </div>`;
+  window._cipherOut = output;
 }
 
 // ════════════════════════════════════════════════
