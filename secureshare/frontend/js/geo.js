@@ -163,7 +163,9 @@ function renderGeoResult(r) {
   // Findings
   document.getElementById('geo-findings').innerHTML = (r.clues || []).map(c => `
     <div class="geo-finding-item">
-      <div class="geo-finding-em">${c.emoji || '🔍'}</div>
+      <div class="geo-finding-em" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
       <div>
         <div class="geo-finding-label">${c.label || ''}</div>
         <div class="geo-finding-desc">${c.description || ''}</div>
@@ -175,7 +177,7 @@ function renderGeoResult(r) {
 
   // Alternatives
   document.getElementById('geo-alternatives').innerHTML = (r.alternatives || []).map((a, i) => `
-    <div class="geo-alt-item" onclick="openAltMap(${a.lat}, ${a.lng})">
+    <div class="geo-alt-item" role="button" tabindex="0" aria-label="${a.name || '?'}" onclick="openAltMap(${a.lat}, ${a.lng})" onkeydown="if(event.key==='Enter'||event.key===' ')openAltMap(${a.lat}, ${a.lng})">
       <span class="geo-alt-rank">#${i + 2}</span>
       <span class="geo-alt-name">${a.name || '?'}</span>
       <span class="geo-alt-conf">${a.confidence || 0}%</span>

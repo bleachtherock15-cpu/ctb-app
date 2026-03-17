@@ -183,7 +183,7 @@ async function loadShares() {
   try {
     const { shares } = await Shares.list();
     renderShares(shares);
-  } catch (e) { console.error(e); }
+  } catch (e) { notify('โหลดรายการไม่ได้', true); }
 }
 
 function renderShares(shares) {
@@ -386,18 +386,18 @@ function runPw(pw) {
   const z = window.zxcvbn ? zxcvbn(pw) : null;
 
   const checks = [
-    { l: 'At least 8 characters',     p: pw.length >= 8 },
-    { l: 'At least 12 characters',    p: pw.length >= 12 },
-    { l: 'Lowercase letters',         p: /[a-z]/.test(pw) },
-    { l: 'Uppercase letters',         p: /[A-Z]/.test(pw) },
-    { l: 'Numbers',                   p: /[0-9]/.test(pw) },
-    { l: 'Special characters',        p: /[^a-zA-Z0-9]/.test(pw) },
-    { l: 'No repeated characters',    p: !hasRepeat },
-    { l: 'No keyboard patterns',      p: !hasKeyboard },
-    { l: 'No sequential characters',  p: !hasSeq },
-    { l: 'Character variety (40%+)',  p: !lowVariety },
-    { l: 'Not a common password',     p: !commonLeet && (!z || z.score >= 2) },
-    { l: 'Not all same character',    p: !allSame },
+    { l: 'อย่างน้อย 8 ตัวอักษร',          p: pw.length >= 8 },
+    { l: 'อย่างน้อย 12 ตัวอักษร',         p: pw.length >= 12 },
+    { l: 'มีตัวพิมพ์เล็ก',                p: /[a-z]/.test(pw) },
+    { l: 'มีตัวพิมพ์ใหญ่',                p: /[A-Z]/.test(pw) },
+    { l: 'มีตัวเลข',                       p: /[0-9]/.test(pw) },
+    { l: 'มีอักขระพิเศษ',                  p: /[^a-zA-Z0-9]/.test(pw) },
+    { l: 'ไม่มีตัวอักษรซ้ำกัน',            p: !hasRepeat },
+    { l: 'ไม่มีรูปแบบแป้นพิมพ์',           p: !hasKeyboard },
+    { l: 'ไม่มีตัวอักษรเรียงลำดับ',        p: !hasSeq },
+    { l: 'ความหลากหลาย 40%+',              p: !lowVariety },
+    { l: 'ไม่ใช่รหัสผ่านทั่วไป',           p: !commonLeet && (!z || z.score >= 2) },
+    { l: 'ไม่ใช้อักษรเดียวทั้งหมด',        p: !allSame },
   ];
 
   // Determine effective score (0-4) with pattern penalties
@@ -418,9 +418,9 @@ function runPw(pw) {
 
   const scoreMap = [
     { c: 'var(--red)',    w: '8%',   l: 'อันตราย'      },
-    { c: '#e06c75',       w: '22%',  l: 'อ่อนแอ'       },
+    { c: 'var(--red-soft)', w: '22%', l: 'อ่อนแอ'      },
     { c: 'var(--amber)',  w: '48%',  l: 'พอใช้ได้'     },
-    { c: 'var(--blue)',   w: '74%',  l: 'แข็งแกร่ง'    },
+    { c: 'var(--brand)',  w: '74%',  l: 'แข็งแกร่ง'    },
     { c: 'var(--green)', w: '100%', l: 'ปลอดภัยสูง'   },
   ];
   const cfg = scoreMap[effectiveScore];
@@ -436,21 +436,41 @@ function runPw(pw) {
   const scoreCap = [20, 40, 60, 80, 100][effectiveScore];
   const score = Math.min(scoreCap, Math.round(checks.filter(c => c.p).length / checks.length * 100));
 
+  // zxcvbn English suggestion → Thai map
+  const zxTh = {
+    'Use a few words, avoid common phrases': 'ใช้คำหลายคำ หลีกเลี่ยงวลีที่พบบ่อย',
+    'No need for symbols, digits, or uppercase letters': 'ลองเพิ่มความยาวแทนการใช้สัญลักษณ์',
+    'Add another word or two. Uncommon words are better.': 'เพิ่มคำที่ไม่คุ้นเคยอีก 1-2 คำ',
+    'Capitalization doesn\'t help very much': 'การใช้ตัวพิมพ์ใหญ่เพียงอย่างเดียวช่วยได้น้อย',
+    'All-uppercase is almost as easy to guess as all-lowercase': 'ตัวพิมพ์ใหญ่ทั้งหมดถูกเดาได้ง่ายพอๆ กับตัวพิมพ์เล็ก',
+    'Reversed words aren\'t much harder to guess': 'การสะกดคำกลับหลังไม่ได้ยากต่อการเดามากนัก',
+    'Predictable substitutions like \'@\' instead of \'a\' don\'t help very much': 'การแทน @→a หรือ 3→e ไม่ได้ช่วยเพิ่มความปลอดภัยมากนัก',
+    'Avoid repeated words and characters': 'หลีกเลี่ยงคำหรืออักษรซ้ำ',
+    'Avoid sequences': 'หลีกเลี่ยงตัวอักษรเรียงลำดับ',
+    'Avoid recent years': 'หลีกเลี่ยงปีล่าสุด',
+    'Avoid years that are associated with you': 'หลีกเลี่ยงปีที่เกี่ยวข้องกับตัวคุณ',
+    'Avoid dates and years that are associated with you': 'หลีกเลี่ยงวันที่หรือปีที่เกี่ยวข้องกับตัวคุณ',
+    'Avoid common names and surnames': 'หลีกเลี่ยงชื่อหรือนามสกุลที่พบบ่อย',
+    'Names and surnames by themselves are easy to guess': 'ชื่อหรือนามสกุลเพียงอย่างเดียวถูกเดาได้ง่าย',
+    'Common names and surnames are easy to guess': 'ชื่อที่พบบ่อยถูกเดาได้ง่าย',
+  };
+  const translateZ = s => zxTh[s] || s;
+
   // Suggestions
   const sug = [];
-  if (allSame)       sug.push('Avoid using the same character repeatedly (e.g. "aaaaaaa")');
-  if (commonLeet)    sug.push('This is a common password even with substitutions');
-  if (hasKeyboard)   sug.push('Avoid keyboard patterns (qwerty, asdfgh, etc.)');
-  if (hasSeq)        sug.push('Avoid sequential characters (abcde, 12345, etc.)');
-  if (hasRepeat)     sug.push('Reduce character repetition');
-  if (lowVariety)    sug.push('Use more variety — too many repeated characters');
-  if (z && z.feedback.warning) sug.push(z.feedback.warning);
-  if (z) sug.push(...(z.feedback.suggestions || []));
-  if (pw.length < 8)  sug.push('Use at least 8 characters');
-  if (pw.length < 12) sug.push('Increase to 12+ characters for better security');
-  if (!/[A-Z]/.test(pw)) sug.push('Add uppercase letters');
-  if (!/[0-9]/.test(pw)) sug.push('Include numbers');
-  if (!/[^a-zA-Z0-9]/.test(pw)) sug.push('Add special characters (!@#$%^&*)');
+  if (allSame)       sug.push('หลีกเลี่ยงการใช้อักษรเดียวซ้ำกันทั้งหมด');
+  if (commonLeet)    sug.push('รหัสนี้เป็นรหัสผ่านที่พบบ่อย แม้จะมีการแทนอักษร');
+  if (hasKeyboard)   sug.push('หลีกเลี่ยงรูปแบบแป้นพิมพ์ เช่น qwerty, asdfgh');
+  if (hasSeq)        sug.push('หลีกเลี่ยงตัวอักษรเรียงลำดับ เช่น abcde, 12345');
+  if (hasRepeat)     sug.push('ลดการใช้ตัวอักษรซ้ำ');
+  if (lowVariety)    sug.push('เพิ่มความหลากหลาย — มีตัวอักษรซ้ำมากเกินไป');
+  if (z && z.feedback.warning) sug.push(translateZ(z.feedback.warning));
+  if (z) sug.push(...(z.feedback.suggestions || []).map(translateZ));
+  if (pw.length < 8)  sug.push('ใช้อย่างน้อย 8 ตัวอักษร');
+  if (pw.length < 12) sug.push('เพิ่มความยาวเป็น 12+ ตัวอักษรเพื่อความปลอดภัยมากขึ้น');
+  if (!/[A-Z]/.test(pw)) sug.push('เพิ่มตัวพิมพ์ใหญ่');
+  if (!/[0-9]/.test(pw)) sug.push('เพิ่มตัวเลข');
+  if (!/[^a-zA-Z0-9]/.test(pw)) sug.push('เพิ่มอักขระพิเศษ (!@#$%^&*)');
   const uniqSug = [...new Set(sug)];
   document.getElementById('pw-bar-wrap').style.display = '';
   document.getElementById('pw-str-lbl').textContent = cfg.l;
@@ -465,21 +485,21 @@ function runPw(pw) {
   res.innerHTML = `<div class="card"><div class="cb">
     <div class="g3 mb16">
       <div style="text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">
-        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Score</div>
+        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">คะแนน</div>
         <div style="font-size:24px;font-weight:800;color:${cfg.c}">${score}<span style="font-size:12px;opacity:.6">/100</span></div>
       </div>
       <div style="text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">
-        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Length</div>
+        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">ความยาว</div>
         <div style="font-size:24px;font-weight:800;color:${cfg.c}">${pw.length}</div>
       </div>
       <div style="text-align:center;padding:14px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--rs)">
-        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Crack time</div>
+        <div style="font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">เวลาแคร็ก</div>
         <div style="font-size:14px;font-weight:800;color:${cfg.c}">${ct}</div>
       </div>
     </div>
-    <label class="lbl mb8">Security checklist</label>
+    <label class="lbl mb8">รายการตรวจสอบ</label>
     <div class="ck-grid mb12">${checks.map(c => `<div class="ck-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${c.p ? 'var(--green)' : 'var(--tx-3)'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${c.p ? '<polyline points="20 6 9 17 4 12"/>' : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}</svg><span style="color:${c.p ? 'var(--tx-1)' : 'var(--tx-3)'}">${c.l}</span></div>`).join('')}</div>
-    ${uniqSug.length ? `<label class="lbl mb8">Suggestions</label><div style="display:flex;flex-direction:column;gap:5px">${uniqSug.map(s => `<div style="font-size:12px;color:var(--tx-2);display:flex;gap:7px;align-items:center"><span style="color:var(--blue)">→</span>${s}</div>`).join('')}</div>` : ''}
+    ${uniqSug.length ? `<label class="lbl mb8">คำแนะนำ</label><div style="display:flex;flex-direction:column;gap:5px">${uniqSug.map(s => `<div style="font-size:12px;color:var(--tx-2);display:flex;gap:7px;align-items:center"><span style="color:var(--brand)">→</span>${s}</div>`).join('')}</div>` : ''}
   </div></div>`;
   res.classList.add('on');
 }

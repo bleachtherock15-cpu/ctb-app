@@ -12,7 +12,7 @@
   --brand:#a73b24; --brand-2:#8b3020; --brand-dim:rgba(167,59,36,.08);
   --purple:#7c3aed; --purple-2:#6d28d9; --purple-light:#a78bfa; --purple-dim:rgba(124,58,237,.07);
   --green:#16a34a; --green-2:#15803d;
-  --amber:#b45309; --red:#c0392b;
+  --amber:#b45309; --red:#c0392b; --red-soft:#c86060;
   --indigo:#6366f1;
   /* legacy aliases — prefer --brand in new code */
   --cyan:var(--brand); --cyan-2:var(--brand-2); --cyan-dim:var(--brand-dim);
@@ -419,7 +419,7 @@ input[type=file]{display:none}
 @keyframes pin-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .geo-finding-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}
 .geo-finding-item:last-child{border-bottom:none}
-.geo-finding-em{font-size:20px;flex-shrink:0;line-height:1.4}
+.geo-finding-em{width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18);border-radius:6px;margin-top:1px}
 .geo-finding-label{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;
   color:var(--tx-1);margin-bottom:2px}
 .geo-finding-desc{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--tx-2);line-height:1.55}

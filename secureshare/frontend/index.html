@@ -26,7 +26,7 @@
   <div class="auth-brand">
     <div class="auth-brand-inner">
       <div class="auth-brand-logo">
-        <img src="img/kku-logo.png" alt="KKU" style="width:72px;height:90px;object-fit:contain"/>
+        <img src="img/kku-logo.png" alt="ตราสัญลักษณ์มหาวิทยาลัยขอนแก่น" style="width:72px;height:90px;object-fit:contain"/>
       </div>
       <h1 class="auth-brand-title">CTB</h1>
       <p class="auth-brand-sub">Cyber Tool Box</p>
@@ -69,7 +69,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="mob-bar-logo">
-      <img src="img/kku-logo.png" alt="KKU" style="width:22px;height:28px;object-fit:contain"/>
+      <img src="img/kku-logo.png" alt="ตราสัญลักษณ์มหาวิทยาลัยขอนแก่น" style="width:22px;height:28px;object-fit:contain"/>
       <div><div class="logo-t">CTB</div><div class="logo-s">Cyber Tool Box</div></div>
     </div>
   </div>
@@ -79,7 +79,7 @@
   <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="sb-logo">
-      <img src="img/kku-logo.png" alt="KKU" style="width:40px;height:50px;object-fit:contain;flex-shrink:0"/>
+      <img src="img/kku-logo.png" alt="ตราสัญลักษณ์มหาวิทยาลัยขอนแก่น" style="width:40px;height:50px;object-fit:contain;flex-shrink:0"/>
       <div>
         <div class="logo-t">CTB</div>
         <div class="logo-s">Cyber Tool Box</div>
@@ -190,7 +190,7 @@
           </div>
         </div>
         <div class="cb">
-          <div class="dz" id="up-dz" onclick="document.getElementById('up-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="upDrop(event)">
+          <div class="dz" id="up-dz" role="button" tabindex="0" aria-label="เลือกไฟล์เพื่ออัปโหลด" onclick="document.getElementById('up-fi').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('up-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="upDrop(event)">
             <input type="file" id="up-fi" onchange="upSelect(event)"/>
             <div class="dz-icon-wrap">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -295,7 +295,7 @@
           </div>
           <div class="cb">
             <div id="h-fz">
-              <div class="dz kit-dz" onclick="document.getElementById('h-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hfDrop(event)">
+              <div class="dz kit-dz" role="button" tabindex="0" aria-label="เลือกไฟล์เพื่อสร้างแฮช" onclick="document.getElementById('h-fi').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('h-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hfDrop(event)">
                 <input type="file" id="h-fi" onchange="hfSel(event)"/>
                 <div class="dz-icon-wrap">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -519,7 +519,7 @@
       <div id="geo-drop-wrap">
         <div class="card mb16">
           <div class="cb">
-            <div class="dz" id="geo-dz" onclick="document.getElementById('geo-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="geoDrop(event)">
+            <div class="dz" id="geo-dz" role="button" tabindex="0" aria-label="เลือกรูปภาพหรือวิดีโอ" onclick="document.getElementById('geo-fi').click()" onkeydown="if(event.key==='Enter'||event.key===' ')document.getElementById('geo-fi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="geoDrop(event)">
               <input type="file" id="geo-fi" accept="image/*,video/*" onchange="geoFileSelect(event)"/>
               <div class="dz-icon-wrap">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--tx-3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
@@ -531,7 +531,7 @@
             <!-- Preview -->
             <div id="geo-preview-wrap" style="display:none;margin-top:14px;position:relative">
               <img id="geo-preview" style="width:100%;max-height:320px;object-fit:contain;border-radius:var(--rs);background:var(--bg-2);border:1px solid var(--border)" alt="preview"/>
-              <button onclick="clearGeoFile()" aria-label="ลบรูปภาพ" style="position:absolute;top:10px;right:10px;width:28px;height:28px;background:rgba(13,14,20,.85);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:all .15s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
+              <button onclick="clearGeoFile()" aria-label="ลบรูปภาพ" style="position:absolute;top:6px;right:6px;width:44px;height:44px;background:rgba(28,25,23,.7);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:border-color .15s">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx-2)" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
@@ -647,7 +647,7 @@
         <!-- Alternatives -->
         <div class="card mb16">
           <div class="card-header">
-            <div class="card-icon" style="background:rgba(20,160,152,.1)">
+            <div class="card-icon" style="background:rgba(99,102,241,.08)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </div>
             <div><div class="card-title">ตำแหน่งที่เป็นไปได้อื่นๆ</div></div>
@@ -669,8 +669,8 @@
 </div><!-- /app -->
 
 <!-- ══ QR MODAL ══ -->
-<div id="qr-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center">
-  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(15,23,42,.15);margin:16px;text-align:center">
+<div id="qr-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(28,25,23,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:340px;box-shadow:0 20px 60px rgba(28,25,23,.15);margin:16px;text-align:center">
     <div style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:var(--tx-1);margin-bottom:4px">QR Code</div>
     <div id="qr-filename" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--tx-3);margin-bottom:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
     <div id="qr-canvas" style="display:flex;justify-content:center;margin-bottom:16px"></div>
@@ -683,8 +683,8 @@
 </div>
 
 <!-- ══ PASSWORD MODAL ══ -->
-<div id="pw-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center">
-  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px 28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(15,23,42,.15);margin:16px">
+<div id="pw-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(28,25,23,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px 28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(28,25,23,.15);margin:16px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <div style="width:36px;height:36px;border-radius:9px;background:var(--brand-dim);border:1px solid rgba(167,59,36,.22);display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
