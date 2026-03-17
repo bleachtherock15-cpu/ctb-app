@@ -208,7 +208,7 @@ function renderShares(shares) {
         </div>
         <div class="sr-act">
           ${!dead && s.has_password ? `<button class="btn btn-ghost btn-sm" onclick="openPwModal('${s.token}','${escHtml(s.original_name)}')">🔒 ดาวน์โหลด</button>` : ''}
-          ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none">ดาวน์โหลด</a>` : ''}
+          ${!dead && !s.has_password ? `<a class="btn btn-ghost btn-sm" href="${Shares.getDownloadUrl(s.token)}" download style="text-decoration:none" onclick="setTimeout(loadShares,1500)">ดาวน์โหลด</a>` : ''}
           ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="copyShareLink('${s.token}',this)">คัดลอกลิงก์</button>` : ''}
           ${!dead ? `<button class="btn btn-ghost btn-sm" onclick="showQr('${s.token}','${escHtml(s.original_name)}')">QR</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="exportLogsPDF('${s.id}','${escHtml(s.original_name)}')" title="Export PDF">
